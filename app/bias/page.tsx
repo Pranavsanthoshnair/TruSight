@@ -7,8 +7,7 @@ import { Sidebar } from "@/components/sidebar"
 import { ChatWindow } from "@/components/chat-window"
 import { InputBox } from "@/components/input-box"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { ConfettiEffect } from "@/components/confetti-effect"
-import { XPNotification } from "@/components/xp-notification"
+
 import type { ChatHistory, ChatMessage } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Target, ArrowLeft } from "lucide-react"
@@ -19,11 +18,8 @@ function BiasDetectionContent() {
   const searchParams = useSearchParams()
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([])
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null)
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [showXPNotification, setShowXPNotification] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [truthScore, setTruthScore] = useState(0)
 
   // Check for article data from news page
   const articleParam = searchParams.get('article')
@@ -38,12 +34,11 @@ function BiasDetectionContent() {
     return null
   }, [articleParam])
 
-  // Load persisted chats and score
+  // Load persisted chats
   useEffect(() => {
     try {
       const saved = localStorage.getItem("ts_chats")
       const savedCurrent = localStorage.getItem("ts_current")
-      const savedScore = localStorage.getItem("ts_score")
       
       if (saved) {
         const parsed = JSON.parse(saved) as any[]
@@ -58,7 +53,6 @@ function BiasDetectionContent() {
           if (found) setCurrentChat(found)
         }
       }
-      if (savedScore) setTruthScore(parseInt(savedScore))
     } catch {}
   }, [])
 
@@ -80,9 +74,8 @@ function BiasDetectionContent() {
       }))
       localStorage.setItem("ts_chats", JSON.stringify(serializable))
       localStorage.setItem("ts_current", currentChat?.id || "")
-      localStorage.setItem("ts_score", String(truthScore))
     } catch {}
-  }, [chatHistories, currentChat, truthScore])
+  }, [chatHistories, currentChat])
 
   // Calculate dynamic confidence based on bias type and missing perspectives (shared with AnalysisCard)
   const getDynamicConfidence = (bias: string, confidence: number, missingPerspectives: string[]): number => {
@@ -239,10 +232,6 @@ function BiasDetectionContent() {
       setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
       setIsLoading(false)
 
-      // Gamified score based on confidence
-      const inc = Math.max(1, Math.floor(processedAnalysisData.confidence * 5))
-      setTruthScore((s) => s + inc)
-
     } catch (error) {
       console.error('Error analyzing bias:', error)
       
@@ -287,13 +276,6 @@ function BiasDetectionContent() {
 
   return (
     <div className="flex h-screen bg-background">
-      <ConfettiEffect trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
-      <XPNotification
-        show={showXPNotification}
-        xpGained={10}
-        message="Bias Hunter Achievement!"
-        onComplete={() => setShowXPNotification(false)}
-      />
 
       {/* Desktop Sidebar */}
       <div className="hidden md:block w-80 border-r border-border bg-sidebar">
@@ -397,10 +379,6 @@ function BiasDetectionContent() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 text-secondary-foreground text-sm">
-                <span className="font-medium">{truthScore}</span>
-                <span className="text-xs">points</span>
-              </div>
               <ThemeToggle />
             </div>
           </div>

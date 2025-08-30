@@ -139,20 +139,16 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
         </div>
       </div>
 
-      {/* Footer with XP History */}
+      {/* Footer */}
       <motion.div
         className="p-3 sm:p-4 border-t border-sidebar-border flex-shrink-0"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-sidebar-foreground/60">Online</span>
-          </div>
+        <div className="flex items-center justify-center">
           <div className="text-xs text-sidebar-foreground/60">
-            <span className="hidden sm:inline">Analyses: </span>{chatHistories.length}
+            {chatHistories.length} analysis{chatHistories.length !== 1 ? 'es' : ''}
           </div>
         </div>
       </motion.div>

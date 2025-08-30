@@ -33,8 +33,8 @@ export default function LearnMorePage() {
             description="Surface missing angles such as economic impact or community voices to round out your view."
           />
           <FeatureCard
-            title="Truth Points"
-            description="Earn points as you analyze more articles — a gentle nudge toward balanced reading."
+            title="Analysis History"
+            description="Keep track of your previous analyses and build a comprehensive understanding of media bias patterns."
           />
           <FeatureCard
             title="Attach & Analyze"
