@@ -341,20 +341,19 @@ function BiasDetectionContent() {
       )}
 
       <div className="flex-1 flex flex-col">
-        <header className="border-b border-border bg-card px-3 sm:px-4 py-3">
+        {/* Simplified Header */}
+        <header className="border-b border-border bg-background/95 backdrop-blur-sm px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button 
-                className="md:hidden hover-scale focus-ring" 
+                className="md:hidden" 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Open navigation</span>
               </Button>
               
-              {/* Back to News Button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -362,72 +361,37 @@ function BiasDetectionContent() {
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to News</span>
+                <span className="hidden sm:inline">Back</span>
               </Button>
 
-              <motion.h1
-                className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-foreground tracking-tight ink-bleed"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              >
-                <div className="flex items-center gap-2">
-                  <Target className="h-6 w-6 text-primary" />
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                <h1 className="text-xl font-semibold text-foreground">
                   Bias Detection
-                </div>
-              </motion.h1>
+                </h1>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <motion.div 
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs hover-scale hover-glow transition-all duration-300"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <span>Truth Points</span>
-                <div className="w-20 sm:w-24 h-2 bg-muted rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full bg-primary"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, truthScore)}%` }}
-                    transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                  />
-                </div>
-                <span className="tabular-nums font-medium">{truthScore}</span>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, rotate: -180 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                <ThemeToggle />
-              </motion.div>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 text-secondary-foreground text-sm">
+                <span className="font-medium">{truthScore}</span>
+                <span className="text-xs">points</span>
+              </div>
+              <ThemeToggle />
             </div>
           </div>
-          <motion.div
-            className="mt-2 flex items-center justify-between text-xs md:text-sm text-muted-foreground"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <span className="uppercase tracking-wider">Edition • International</span>
-            <span>{todayString}</span>
-          </motion.div>
         </header>
 
-        <div className="flex-1 flex">
-          <div className="flex-1 flex flex-col">
+        {/* Main Content Area */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col min-w-0">
             <ChatWindow messages={currentChat?.messages || []} isLoading={isLoading} />
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
+            <div className="border-t border-border bg-background/50">
               <InputBox
                 onSendMessage={sendMessage}
                 onSendFiles={(fileNames) => {
                   if (!currentChat) {
-                    // create chat then re-call
                     startNewAnalysis()
                   }
                   const targetChat = currentChat || chatHistories[0] || null
@@ -446,16 +410,41 @@ function BiasDetectionContent() {
                   setChatHistories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
                 }}
               />
-            </motion.div>
+            </div>
           </div>
 
+          {/* Analysis Panel - Desktop */}
           {showAnalysis && (
             <motion.div
-              className="hidden lg:block w-96 border-l border-border bg-background/50 backdrop-blur-sm p-6 overflow-y-auto"
+              className="hidden lg:block w-96 border-l border-border bg-background/50 backdrop-blur-sm overflow-y-auto"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
             >
+              <div className="p-6">
+                {analysisData && (
+                  <AnalysisCard
+                    bias={analysisData.bias}
+                    confidence={analysisData.confidence}
+                    owner={analysisData.owner}
+                    missingPerspectives={analysisData.missingPerspectives}
+                    reasoning={analysisData.reasoning}
+                  />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Analysis Panel - Mobile */}
+        {showAnalysis && (
+          <motion.div 
+            className="lg:hidden border-t border-border bg-background/50 backdrop-blur-sm overflow-y-auto max-h-96"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <div className="p-4">
               {analysisData && (
                 <AnalysisCard
                   bias={analysisData.bias}
@@ -465,27 +454,7 @@ function BiasDetectionContent() {
                   reasoning={analysisData.reasoning}
                 />
               )}
-            </motion.div>
-          )}
-        </div>
-
-        {/* Mobile Analysis section below chat */}
-        {showAnalysis && (
-          <motion.div 
-            className="lg:hidden border-t border-border bg-background/50 backdrop-blur-sm p-6 overflow-x-hidden"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            {analysisData && (
-              <AnalysisCard
-                bias={analysisData.bias}
-                confidence={analysisData.confidence}
-                owner={analysisData.owner}
-                missingPerspectives={analysisData.missingPerspectives}
-                reasoning={analysisData.reasoning}
-              />
-            )}
+            </div>
           </motion.div>
         )}
       </div>
