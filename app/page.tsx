@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, AlertCircle, RefreshCw, Target, ChevronDown, Globe } from "lucide-react"
+import PrismaticBurst from '@/components/PrismaticBurst';
 
 export default function Home() {
   const router = useRouter()
@@ -49,14 +50,14 @@ export default function Home() {
     try {
       setIsLoading(true)
       setError(null)
-      
+
       const articles = await newsService.fetchTopHeadlines(selectedCategory || "general")
       setNews(articles)
       setFilteredNews(articles)
     } catch (err) {
       console.error("Failed to fetch news:", err)
       setError("Failed to load news. Using cached data.")
-      
+
       // Fallback to mock data
       const mockArticles = newsService.getMockNews()
       setNews(mockArticles)
@@ -83,7 +84,7 @@ export default function Home() {
       url: article.url,
       source: article.source.name
     }))
-    
+
     router.push(`/bias?article=${articleData}`)
   }
 
@@ -120,60 +121,77 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       {/* Full-screen Hero Section */}
       <section className="min-h-screen flex items-center justify-center relative px-4 sm:px-6 lg:px-8">
+        {/* Prismatic Burst Background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <PrismaticBurst
+            animationType="rotate3d"
+            intensity={1.5}
+            speed={0.3}
+            distort={2.0}
+            paused={false}
+            offset={{ x: 0, y: 0 }}
+            hoverDampness={0.25}
+            rayCount={16}
+            mixBlendMode="lighten"
+            colors={['#ff007a', '#4d3dff', '#00d4ff', '#ffffff']}
+          />
+        </div>
+        
+        {/* Hero Content */}
         <motion.div
-          className="text-center max-w-5xl mx-auto"
+          className="text-center max-w-5xl mx-auto relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-serif font-normal text-foreground mb-6 md:mb-8 leading-tight tracking-tight">
-            Stay Informed,<br />
-            Stay Objective
-          </h1>
-          
-          <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl md:max-w-3xl mx-auto leading-relaxed mb-8 md:mb-10">
-            Discover the latest news from around the world, then analyze potential bias 
-            with our AI-powered detection tool. Make informed decisions with TruSight.
-          </p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mb-16 md:mb-20"
-          >
-            <Button
-              onClick={() => document.getElementById('news-section')?.scrollIntoView({ behavior: 'smooth' })}
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-base md:text-lg px-8 md:px-10 py-4 md:py-5 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              Explore News
-            </Button>
-          </motion.div>
-        </motion.div>
-        
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 md:bottom-12 left-1/2 transform -translate-x-1/2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1 }}
-        >
-          <div className="flex flex-col items-center text-muted-foreground">
-            <span className="text-xs md:text-sm font-medium mb-3 md:mb-4 text-muted-foreground/80">Scroll to explore</span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-serif font-normal text-foreground mb-6 md:mb-8 leading-tight tracking-tight">
+              Stay Informed,<br />
+              Stay Objective
+            </h1>
+
+            <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl md:max-w-3xl mx-auto leading-relaxed mb-8 md:mb-10">
+              Discover the latest news from around the world, then analyze potential bias
+              with our AI-powered detection tool. Make informed decisions with TruSight.
+            </p>
+
             <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="text-muted-foreground/60"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="mb-16 md:mb-20"
             >
-              <ChevronDown className="w-5 h-5 md:w-6 md:h-6" />
+              <Button
+                onClick={() => document.getElementById('news-section')?.scrollIntoView({ behavior: 'smooth' })}
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-base md:text-lg px-8 md:px-10 py-4 md:py-5 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Explore News
+              </Button>
             </motion.div>
-          </div>
-        </motion.div>
-      </section>
+          </motion.div>
+
+          {/* Scroll indicator */}
+          <motion.div
+            className="absolute bottom-8 md:bottom-12 left-1/2 transform -translate-x-1/2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 1 }}
+          >
+            <div className="flex flex-col items-center text-muted-foreground">
+              <span className="text-xs md:text-sm font-medium mb-3 md:mb-4 text-muted-foreground/80">Scroll to explore</span>
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="text-muted-foreground/60"
+              >
+                <ChevronDown className="w-5 h-5 md:w-6 md:h-6" />
+              </motion.div>
+            </div>
+          </motion.div>
+        </section>
 
       {/* News Content Section */}
       <section id="news-section" className="py-16 bg-background">
@@ -212,7 +230,7 @@ export default function Home() {
                 </Badge>
               )}
             </div>
-            
+
             <Button
               onClick={handleRefresh}
               variant="outline"
@@ -335,7 +353,7 @@ export default function Home() {
                   Ready to Analyze Bias?
                 </h3>
                 <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Use our advanced AI-powered bias detection tool to analyze any article, 
+                  Use our advanced AI-powered bias detection tool to analyze any article,
                   text, or URL. Get instant insights into potential media bias and missing perspectives.
                 </p>
                 <Button
