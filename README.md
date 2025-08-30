@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+TruSight – Unmasking Hidden Narratives in News
 
-## Getting Started
+TruSight is an AI-powered web app that detects bias in news articles and helps users discover reliable perspectives. Built in Next.js (React + TypeScript) with a newspaper-themed, chat-style UI, it lets users paste links or text, analyze bias, and see insights in real time.
 
-First, run the development server:
+Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Bias Detection – NLP models analyze news content to flag potential ideological leanings.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Gamified UI – Chat-style interface with animations, icons, and playful hints.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+History & Profile – Keeps track of previous analyses (temporary or persistent).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Attachment Support – Upload articles, images, or docs directly in the chat.
 
-## Learn More
+Responsive Newspaper Theme – Works beautifully on desktop and mobile.
 
-To learn more about Next.js, take a look at the following resources:
+Modular Design – Easy to extend with ownership lookup, fact-check scores, or community features.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Frontend: Next.js (React + TypeScript), Tailwind CSS, Framer Motion
 
-## Deploy on Vercel
+Backend (optional): FastAPI/Flask (Python) for AI models
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+AI Models: Hugging Face Transformers for sentiment and bias detection
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Database (optional): Supabase / Firebase (free tier)
+
+Version Control: GitHub

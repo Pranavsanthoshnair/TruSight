@@ -1,0 +1,329 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Newspaper-inspired Light Theme */
+  --background: #fffaf3; /* Warm off-white paper */
+  --foreground: #1f2937; /* Ink gray */
+  --card: #faf6ee; /* Subtle paper card */
+  --card-foreground: #1f2937;
+  --popover: #ffffff;
+  --popover-foreground: #1f2937;
+  --primary: #b10f2e; /* Editorial crimson */
+  --primary-foreground: #ffffff;
+  --secondary: #f2eee6; /* Newsprint tint */
+  --secondary-foreground: #374151;
+  --muted: #f8f3ea;
+  --muted-foreground: #6b7280;
+  --accent: #b10f2e; /* Use primary as accent for cohesion */
+  --accent-foreground: #ffffff;
+  --destructive: #9b1c1c; /* Deeper red for destructive */
+  --destructive-foreground: #ffffff;
+  --border: #e7ded1; /* Paper edge line */
+  --input: #ffffff;
+  --ring: #b10f2e;
+  --chart-1: #f5d0a9; /* sepia sand */
+  --chart-2: #eab676; /* warm tan */
+  --chart-3: #c08552; /* clay */
+  --chart-4: #6fb37e; /* muted green */
+  --chart-5: #6a8caf; /* ink blue */
+  --radius: 0.5rem;
+  --sidebar: #faf7f2;
+  --sidebar-foreground: #1f2937;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #1f2937;
+  --sidebar-accent: #b10f2e;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e7ded1;
+  --sidebar-ring: #b10f2e;
+}
+
+.dark {
+  /* Newspaper-inspired Dark Theme */
+  --background: #0f1419; /* Ink night */
+  --foreground: #e6e0d6; /* Aged paper white */
+  --card: #151a20;
+  --card-foreground: #e6e0d6;
+  --popover: #151a20;
+  --popover-foreground: #e6e0d6;
+  --primary: #d72638; /* Headline crimson */
+  --primary-foreground: #ffffff;
+  --secondary: #1c232b; /* Press room steel */
+  --secondary-foreground: #e6e0d6;
+  --muted: #1d242c;
+  --muted-foreground: #b9b4aa;
+  --accent: #d72638;
+  --accent-foreground: #ffffff;
+  --destructive: #a61b25;
+  --destructive-foreground: #ffffff;
+  --border: #2a2f36;
+  --input: #0f1419;
+  --ring: #d72638;
+  --chart-1: #f4c95d; /* press gold */
+  --chart-2: #ea7a58; /* copper */
+  --chart-3: #b36a5e; /* terracotta */
+  --chart-4: #5fbf98; /* teal green */
+  --chart-5: #7aa6d1; /* slate blue */
+  --sidebar: #151a20;
+  --sidebar-foreground: #e6e0d6;
+  --sidebar-primary: #1c232b;
+  --sidebar-primary-foreground: #e6e0d6;
+  --sidebar-accent: #d72638;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a2f36;
+  --sidebar-ring: #d72638;
+}
+
+@theme inline {
+  /* Added newspaper fonts */
+  --font-sans: "Open Sans", var(--font-geist-sans);
+  --font-serif: "Playfair Display", serif;
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Utility classes for text overflow handling */
+.text-ellipsis-overflow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-wrap-break {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth transitions and animations */
+* {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced scroll animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation utility classes */
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.6s ease-out forwards;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.6s ease-out forwards;
+}
+
+/* Staggered animations */
+.animate-stagger-1 { animation-delay: 0.1s; }
+.animate-stagger-2 { animation-delay: 0.2s; }
+.animate-stagger-3 { animation-delay: 0.3s; }
+.animate-stagger-4 { animation-delay: 0.4s; }
+
+/* Enhanced responsive utilities */
+@media (max-width: 640px) {
+  .mobile-hidden { display: none; }
+  .mobile-block { display: block; }
+  .mobile-flex { display: flex; }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-hidden { display: none; }
+  .tablet-block { display: block; }
+  .tablet-flex { display: flex; }
+}
+
+@media (min-width: 1025px) {
+  .desktop-hidden { display: none; }
+  .desktop-block { display: block; }
+  .desktop-flex { display: flex; }
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.hover-glow {
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth focus transitions */
+.focus-ring {
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(177, 15, 46, 0.3);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  /* Added newspaper-specific styles */
+  .newspaper-texture {
+    background-image: radial-gradient(circle at 1px 1px, rgba(55, 65, 81, 0.15) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  .ink-bleed {
+    filter: drop-shadow(0 0 2px rgba(55, 65, 81, 0.1));
+  }
+  .torn-edge {
+    position: relative;
+  }
+  .torn-edge::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(55, 65, 81, 0.1) 3px,
+      rgba(55, 65, 81, 0.1) 6px
+    );
+  }
+}
