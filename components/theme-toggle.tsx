@@ -1,45 +1,35 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { motion } from "framer-motion"
-import { Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
+import { Moon, Sun } from "lucide-react"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // Prevent hydration mismatch by only rendering after mount
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // Prevent hydration mismatch
+  useEffect(() => setMounted(true), [])
 
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="sm" className="relative overflow-hidden hover:bg-accent/10">
-        <Sun className="h-4 w-4" />
-        <span className="sr-only">Toggle theme</span>
-      </Button>
-    )
-  }
+  if (!mounted) return null
 
   const isDark = theme === "dark"
 
   return (
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      onClick={() => setTheme(isDark ? "light" : "dark")} 
-      className="relative overflow-hidden hover:bg-accent/10"
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-pressed={isDark}
+      title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="h-8 w-8"
     >
-      <motion.div
-        initial={false}
-        animate={{ rotate: isDark ? 180 : 0 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-      >
-        {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-      </motion.div>
+      {isDark ? (
+        <Moon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+      ) : (
+        <Sun className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+      )}
       <span className="sr-only">Toggle theme</span>
     </Button>
   )
