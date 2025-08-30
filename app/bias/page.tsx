@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, useScroll, useTransform } from "framer-motion"
 import { Sidebar } from "@/components/sidebar"
 import { ChatWindow } from "@/components/chat-window"
 import { InputBox } from "@/components/input-box"
@@ -12,8 +12,9 @@ import { ConfettiEffect } from "@/components/confetti-effect"
 import { XPNotification } from "@/components/xp-notification"
 import type { ChatHistory, ChatMessage } from "@/lib/mock-data"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Target, ArrowLeft } from "lucide-react"
+import { Menu, X, Target, ArrowLeft, Brain, TrendingUp, Shield } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { AnimatePresence } from "framer-motion"
 
 function BiasDetectionContent() {
   const router = useRouter()
@@ -27,6 +28,14 @@ function BiasDetectionContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [truthScore, setTruthScore] = useState(0)
   const [analysisData, setAnalysisData] = useState<{ bias: string; confidence: number; owner: string; missingPerspectives: string[] } | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
+  const { scrollYProgress } = useScroll()
+  const y = useTransform(scrollYProgress, [0, 1], [0, -30])
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Check for article data from news page
   const articleParam = searchParams.get('article')
@@ -221,7 +230,7 @@ function BiasDetectionContent() {
       />
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block w-80 border-r border-border bg-sidebar">
+      <div className="hidden md:block w-80 border-r border-border/60 bg-sidebar shadow-lg">
         <Sidebar
           chatHistories={chatHistories}
           currentChat={currentChat}
@@ -231,70 +240,78 @@ function BiasDetectionContent() {
       </div>
 
       {/* Mobile Sidebar Slide-over */}
-      {sidebarOpen && (
-        <motion.div
-          className="md:hidden fixed inset-0 z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+      <AnimatePresence>
+        {sidebarOpen && (
           <motion.div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setSidebarOpen(false)}
+            className="md:hidden fixed inset-0 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-          />
-          <motion.div
-            className="relative h-full w-80 max-w-[85%] bg-sidebar border-r border-border shadow-2xl"
-            initial={{ x: -320, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -320, opacity: 0 }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 300, 
-              damping: 30,
-              duration: 0.4
-            }}
+            transition={{ duration: 0.3 }}
           >
-            <motion.div 
-              className="absolute right-2 top-2"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarOpen(false)}
-                className="hover-scale focus-ring"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </motion.div>
-            <Sidebar
-              chatHistories={chatHistories}
-              currentChat={currentChat}
-              onSelectChat={(c) => {
-                setCurrentChat(c)
-                setSidebarOpen(false)
-              }}
-              onNewAnalysis={() => {
-                startNewAnalysis()
-                setSidebarOpen(false)
-              }}
+            <motion.div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setSidebarOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             />
+            <motion.div
+              className="relative h-full w-80 max-w-[85%] bg-sidebar border-r border-border/60 shadow-2xl"
+              initial={{ x: -320, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -320, opacity: 0 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 30,
+                duration: 0.4
+              }}
+            >
+              <div className="absolute right-3 top-3">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setSidebarOpen(false)}
+                  className="h-10 w-10 hover:bg-muted/50 hover-scale focus-ring rounded-lg"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <Sidebar
+                chatHistories={chatHistories}
+                currentChat={currentChat}
+                onSelectChat={(c) => {
+                  setCurrentChat(c)
+                  setSidebarOpen(false)
+                }}
+                onNewAnalysis={() => {
+                  startNewAnalysis()
+                  setSidebarOpen(false)
+                }}
+              />
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
       <div className="flex-1 flex flex-col">
-        <header className="border-b border-border bg-card px-3 sm:px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <header className="border-b border-border/60 bg-card px-6 sm:px-8 py-6 relative overflow-hidden shadow-sm">
+          {/* Background Elements */}
+          {isMounted && (
+            <motion.div
+              className="absolute inset-0 opacity-5"
+              style={{ y }}
+            >
+              <div className="absolute top-3 left-12 w-28 h-28 bg-primary rounded-full blur-3xl" />
+              <div className="absolute top-5 right-24 w-24 h-24 bg-secondary rounded-full blur-3xl" />
+            </motion.div>
+          )}
+
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-4">
               <Button 
-                className="md:hidden hover-scale focus-ring" 
+                className="md:hidden hover-scale focus-ring h-11 w-11 rounded-lg" 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setSidebarOpen(true)}
@@ -308,104 +325,68 @@ function BiasDetectionContent() {
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push("/")}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-3 text-muted-foreground hover:text-foreground hover-scale focus-ring h-10 px-4 rounded-lg"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to News</span>
+                <span className="hidden sm:inline font-medium">Back to News</span>
               </Button>
 
-              <motion.h1
-                className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-foreground tracking-tight ink-bleed"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              >
-                <div className="flex items-center gap-2">
-                  <Target className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-foreground tracking-tight ink-bleed">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl">
+                    <Target className="h-6 w-6 text-primary" />
+                  </div>
                   Bias Detection
                 </div>
-              </motion.h1>
+              </h1>
             </div>
-            <div className="flex items-center gap-2">
-              <motion.div 
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs hover-scale hover-glow transition-all duration-300"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <span>Truth Points</span>
-                <div className="w-20 sm:w-24 h-2 bg-muted rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full bg-primary"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, truthScore)}%` }}
-                    transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                  />
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm hover-scale hover-glow transition-all duration-300 shadow-sm">
+                <span className="font-medium">Truth Points</span>
+                <div className="w-24 sm:w-28 h-2.5 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${Math.min(100, truthScore)}%` }} />
                 </div>
-                <span className="tabular-nums font-medium">{truthScore}</span>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, rotate: -180 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                <ThemeToggle />
-              </motion.div>
+                <span className="tabular-nums font-semibold text-base">{truthScore}</span>
+              </div>
+              <ThemeToggle />
             </div>
           </div>
-          <motion.div
-            className="mt-2 flex items-center justify-between text-xs md:text-sm text-muted-foreground"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <span className="uppercase tracking-wider">Edition • International</span>
-            <span>{todayString}</span>
-          </motion.div>
+          <div className="mt-4 flex items-center justify-between text-sm md:text-base text-muted-foreground">
+            <span className="uppercase tracking-wider font-medium">Edition • International</span>
+            <span className="font-medium">{todayString}</span>
+          </div>
         </header>
 
         <div className="flex-1 flex">
           <div className="flex-1 flex flex-col">
             <ChatWindow messages={currentChat?.messages || []} isLoading={isLoading} />
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <InputBox
-                onSendMessage={sendMessage}
-                onSendFiles={(fileNames) => {
-                  if (!currentChat) {
-                    // create chat then re-call
-                    startNewAnalysis()
-                  }
-                  const targetChat = currentChat || chatHistories[0] || null
-                  if (!targetChat) return
-                  const fileMessages: ChatMessage[] = fileNames.map((name, i) => ({
-                    id: `file_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
-                    content: `Uploaded: ${name}`,
-                    sender: "user",
-                    timestamp: new Date(),
-                  }))
-                  const updated = {
-                    ...targetChat,
-                    messages: [...targetChat.messages, ...fileMessages],
-                  }
-                  setCurrentChat(updated)
-                  setChatHistories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-                }}
-              />
-            </motion.div>
+            <InputBox
+              onSendMessage={sendMessage}
+              onSendFiles={(fileNames) => {
+                if (!currentChat) {
+                  // create chat then re-call
+                  startNewAnalysis()
+                }
+                const targetChat = currentChat || chatHistories[0] || null
+                if (!targetChat) return
+                const fileMessages: ChatMessage[] = fileNames.map((name, i) => ({
+                  id: `file_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
+                  content: `Uploaded: ${name}`,
+                  sender: "user",
+                  timestamp: new Date(),
+                }))
+                const updated = {
+                  ...targetChat,
+                  messages: [...targetChat.messages, ...fileMessages],
+                }
+                setCurrentChat(updated)
+                setChatHistories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+              }}
+            />
           </div>
 
           {showAnalysis && (
-            <motion.div
-              className="hidden lg:block w-80 border-l border-border bg-sidebar p-4 overflow-y-auto"
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
+            <div className="hidden lg:block w-80 border-l border-border/60 bg-sidebar p-6 overflow-y-auto shadow-lg">
               {analysisData && (
                 <AnalysisCard
                   bias={analysisData.bias}
@@ -414,18 +395,13 @@ function BiasDetectionContent() {
                   missingPerspectives={analysisData.missingPerspectives}
                 />
               )}
-            </motion.div>
+            </div>
           )}
         </div>
 
         {/* Mobile Analysis section below chat */}
         {showAnalysis && (
-          <motion.div 
-            className="lg:hidden border-t border-border bg-sidebar p-4 overflow-x-hidden"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
+          <div className="lg:hidden border-t border-border/60 bg-sidebar p-6 overflow-x-hidden">
             {analysisData && (
               <AnalysisCard
                 bias={analysisData.bias}
@@ -434,7 +410,31 @@ function BiasDetectionContent() {
                 missingPerspectives={analysisData.missingPerspectives}
               />
             )}
-          </motion.div>
+          </div>
+        )}
+
+        {/* Feature Highlights for Mobile */}
+        {!showAnalysis && (
+          <div className="lg:hidden border-t border-border/60 bg-sidebar p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4 text-center">Quick Features</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { icon: Brain, title: "AI Analysis", color: "text-blue-500" },
+                { icon: TrendingUp, title: "Real-time", color: "text-green-500" },
+                { icon: Shield, title: "Bias Detection", color: "text-purple-500" }
+              ].map((feature, index) => (
+                <div
+                  key={feature.title}
+                  className="p-4 rounded-xl bg-card/50 border border-border/50 hover-lift shadow-sm"
+                >
+                  <div className={`p-2 bg-${feature.color.split('-')[1]}/10 rounded-lg w-12 h-12 mx-auto mb-3 flex items-center justify-center`}>
+                    <feature.icon className={`h-6 w-6 ${feature.color}`} />
+                  </div>
+                  <p className="text-xs font-medium text-foreground text-center">{feature.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -445,9 +445,9 @@ export default function BiasDetectionPage() {
   return (
     <Suspense fallback={
       <div className="flex h-screen bg-background items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading bias detection...</p>
+        <div className="text-center space-y-6">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+          <p className="text-lg text-muted-foreground font-medium">Loading bias detection...</p>
         </div>
       </div>
     }>
