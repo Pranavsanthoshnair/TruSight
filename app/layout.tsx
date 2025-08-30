@@ -21,9 +21,54 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "TruSight - Bias Analysis Tool",
-  description: "Modern newspaper-themed bias analysis web app",
-  generator: "v0.app",
+  title: "TruSight - News Platform with AI Bias Detection",
+  description: "Stay informed with the latest news from around the world, then analyze potential bias with our AI-powered detection tool. Make informed decisions with TruSight.",
+  keywords: ["news", "bias detection", "media literacy", "AI", "fact checking", "journalism"],
+  authors: [{ name: "TruSight Team" }],
+  creator: "TruSight",
+  publisher: "TruSight",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL("https://trusight.com"),
+  openGraph: {
+    title: "TruSight - News Platform with AI Bias Detection",
+    description: "Stay informed with the latest news from around the world, then analyze potential bias with our AI-powered detection tool.",
+    url: "https://trusight.com",
+    siteName: "TruSight",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "TruSight - News Platform with AI Bias Detection",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TruSight - News Platform with AI Bias Detection",
+    description: "Stay informed with the latest news from around the world, then analyze potential bias with our AI-powered detection tool.",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "your-google-verification-code",
+  },
 }
 
 export default function RootLayout({
