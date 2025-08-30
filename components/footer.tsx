@@ -37,26 +37,24 @@ export function Footer() {
   ]
 
   return (
-    <footer className="bg-muted/30 border-t border-border/60">
-      <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+    <footer className="bg-muted/30 border-t border-border">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
-          <div className="lg:col-span-2 space-y-6">
-            <Link href="/" className="inline-flex items-center space-x-3">
+          <div className="lg:col-span-2 space-y-4">
+            <Link href="/" className="inline-flex items-center space-x-2">
               <motion.div
-                className="flex items-center space-x-3"
+                className="flex items-center space-x-2"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Globe className="h-8 w-8 text-primary" />
-                </div>
-                <span className="text-3xl font-serif font-bold text-foreground tracking-tight">
+                <Globe className="h-8 w-8 text-primary" />
+                <span className="text-2xl font-serif font-bold text-foreground">
                   TruSight
                 </span>
               </motion.div>
             </Link>
-            <p className="text-muted-foreground max-w-lg leading-relaxed text-base">
+            <p className="text-muted-foreground max-w-md leading-relaxed">
               Read the news. See the bias. Sharpen your perspective. TruSight helps you 
               navigate the information landscape with AI-powered bias detection and 
               comprehensive news coverage.
@@ -70,12 +68,12 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all duration-300 hover:shadow-md"
+                    className="p-2 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
                     whileHover={{ scale: 1.1, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label={social.label}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4" />
                   </motion.a>
                 )
               })}
@@ -83,14 +81,14 @@ export function Footer() {
           </div>
 
           {/* Product Links */}
-          <div className="space-y-5">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Product</h3>
-            <ul className="space-y-3">
+          <div className="space-y-4">
+            <h3 className="font-semibold text-foreground">Product</h3>
+            <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors duration-300 hover:scale-105 inline-block"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -100,14 +98,14 @@ export function Footer() {
           </div>
 
           {/* Company Links */}
-          <div className="space-y-5">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Company</h3>
-            <ul className="space-y-3">
+          <div className="space-y-4">
+            <h3 className="font-semibold text-foreground">Company</h3>
+            <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors duration-300 hover:scale-105 inline-block"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -117,15 +115,15 @@ export function Footer() {
           </div>
 
           {/* Resources & Legal */}
-          <div className="space-y-8">
-            <div className="space-y-5">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Resources</h3>
-              <ul className="space-y-3">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground">Resources</h3>
+              <ul className="space-y-2">
                 {footerLinks.resources.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors duration-300 hover:scale-105 inline-block"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -133,14 +131,14 @@ export function Footer() {
                 ))}
               </ul>
             </div>
-            <div className="space-y-5">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Legal</h3>
-              <ul className="space-y-3">
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground">Legal</h3>
+              <ul className="space-y-2">
                 {footerLinks.legal.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors duration-300 hover:scale-105 inline-block"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -152,20 +150,15 @@ export function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-16 pt-10 border-t border-border/50">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center space-x-2 text-base text-muted-foreground font-medium">
+        <div className="mt-12 pt-8 border-t border-border/50">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>© {currentYear} TruSight. All rights reserved.</span>
             </div>
-            <div className="flex items-center space-x-3 text-base text-muted-foreground">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>Made with</span>
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-              >
-                <Heart className="h-5 w-5 text-red-500 fill-current" />
-              </motion.div>
-              <span className="font-medium">for better journalism</span>
+              <Heart className="h-4 w-4 text-red-500" />
+              <span>for better journalism</span>
             </div>
           </div>
         </div>
