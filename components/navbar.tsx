@@ -7,18 +7,29 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Menu, X, Search, Globe } from "lucide-react"
-
+import { Menu, X, Search, Globe, User } from "lucide-react"
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs"
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { isSignedIn } = useUser()
 
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/bias", label: "Bias Detection" },
     { href: "/about", label: "About" },
   ]
+
+  const authenticatedNavItems = [
+    { href: "/", label: "Home" },
+    { href: "/bias", label: "Bias Detection" },
+    { href: "/analyze", label: "Analyze" },
+    { href: "/profile", label: "Profile" },
+    { href: "/about", label: "About" },
+  ]
+
+  const currentNavItems = isSignedIn ? authenticatedNavItems : navItems
 
   const isActive = (href: string) => pathname === href
 
@@ -42,7 +53,7 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
-            {navItems.map((item) => (
+            {currentNavItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <motion.div
                   className={`relative px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
@@ -64,7 +75,7 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Right side - Search and Theme Toggle */}
+          {/* Right side - Search, Theme Toggle, and Auth */}
           <div className="flex items-center space-x-4">
             {/* Search Button */}
             <Button
@@ -78,6 +89,34 @@ export function Navbar() {
 
             {/* Theme Toggle */}
             <ThemeToggle />
+
+            {/* Authentication */}
+            <div className="flex items-center space-x-2">
+              {isSignedIn ? (
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "h-8 w-8",
+                      userButtonPopoverCard: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700",
+                      userButtonPopoverActionButton: "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700",
+                    }
+                  }}
+                />
+              ) : (
+                <>
+                  <SignInButton mode="modal">
+                    <Button variant="ghost" size="sm">
+                      Sign In
+                    </Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button size="sm">
+                      Sign Up
+                    </Button>
+                  </SignUpButton>
+                </>
+              )}
+            </div>
 
             {/* Mobile menu button */}
             <Button
@@ -106,7 +145,7 @@ export function Navbar() {
             transition={{ duration: 0.2 }}
           >
             <div className="space-y-1 pb-3 pt-2">
-              {navItems.map((item) => (
+              {currentNavItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -123,6 +162,22 @@ export function Navbar() {
                   </div>
                 </Link>
               ))}
+              
+              {/* Mobile Auth Buttons */}
+              {!isSignedIn && (
+                <div className="flex flex-col space-y-2 pt-4 border-t border-border">
+                  <SignInButton mode="modal">
+                    <Button variant="ghost" className="w-full justify-start">
+                      Sign In
+                    </Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button className="w-full justify-start">
+                      Sign Up
+                    </Button>
+                  </SignUpButton>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
