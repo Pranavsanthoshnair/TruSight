@@ -92,8 +92,8 @@ Be thorough but concise in your analysis.`,
       return this.validateAndNormalizeResult(result);
     } catch (error) {
       console.error("Error analyzing bias with Groq:", error);
-      // Fallback to mock data if API fails
-      return this.getFallbackResult();
+      // Throw error instead of using fallback data
+      throw new Error("Failed to analyze bias. Please check your connection and try again.");
     }
   }
 
@@ -168,18 +168,6 @@ Confidence should reflect how clear and consistent the bias indicators are throu
       owner,
       missingPerspectives,
       reasoning,
-    };
-  }
-
-  private getFallbackResult(): BiasAnalysisResult {
-    // Fallback data when API is unavailable
-    return {
-      bias: "Center",
-      confidence: 0.3, // Lower confidence for fallback
-      owner: "Unknown Publisher",
-      missingPerspectives: ["Additional context needed for accurate analysis"],
-      reasoning:
-        "Analysis unavailable - using fallback data. Please try again later.",
     };
   }
 

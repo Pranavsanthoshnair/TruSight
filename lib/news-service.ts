@@ -15,69 +15,69 @@ const NEWS_API_ENDPOINTS = {
 const MOCK_NEWS: NewsArticle[] = [
   {
     id: "1",
-    title: "AI Breakthrough: New Model Shows Unprecedented Accuracy in Bias Detection",
-    description: "Researchers at leading universities have developed a revolutionary AI model that can detect media bias with 95% accuracy, potentially transforming how we consume news.",
-    url: "https://example.com/ai-breakthrough",
-    urlToImage: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
+    title: "Progressive Tax Reform Bill Passes House, Republicans Call It 'Socialist Takeover'",
+    description: "Democrats celebrate the passage of landmark tax legislation that raises rates on the wealthy while Republicans warn it will destroy American businesses and job creation.",
+    url: "https://example.com/progressive-tax-reform",
+    urlToImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop",
     publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-    source: { name: "Tech Daily" },
-    category: "technology",
-    content: "Full article content would go here..."
+    source: { name: "Liberal Daily" },
+    category: "politics",
+    content: "The House of Representatives today passed a sweeping tax reform bill that Democrats say will address income inequality and fund essential social programs. The legislation, championed by progressive lawmakers, raises taxes on corporations and the top 1% of earners while providing relief to working families. Republicans have denounced the bill as a 'socialist takeover' that will harm the economy and drive businesses overseas. The bill now moves to the Senate where it faces an uncertain future."
   },
   {
     id: "2",
-    title: "Global Markets React to New Economic Policies",
-    description: "Major stock exchanges worldwide show mixed reactions as governments implement new economic stimulus packages aimed at boosting post-pandemic recovery.",
-    url: "https://example.com/global-markets",
-    urlToImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop",
+    title: "Conservative Think Tank Report: Government Regulations 'Strangling' American Innovation",
+    description: "A comprehensive study by the Heritage Foundation reveals that excessive government regulations are costing the economy trillions and preventing American businesses from competing globally.",
+    url: "https://example.com/conservative-regulation-study",
+    urlToImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
     publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-    source: { name: "Business Weekly" },
+    source: { name: "Conservative Weekly" },
     category: "business",
-    content: "Full article content would go here..."
+    content: "A groundbreaking report from the Heritage Foundation exposes how government overreach is destroying American competitiveness. The study shows that federal regulations cost the economy $2 trillion annually and prevent small businesses from thriving. The report calls for immediate deregulation to unleash American innovation and restore economic freedom. Critics argue the study ignores environmental and consumer protections."
   },
   {
     id: "3",
-    title: "Climate Summit Yields Historic Agreement on Carbon Reduction",
-    description: "World leaders reach unprecedented consensus on climate action, setting ambitious targets for carbon neutrality by 2050.",
-    url: "https://example.com/climate-summit",
+    title: "Climate Activists Block Major Highway, Demand Immediate Action on Environmental Crisis",
+    description: "Environmental protesters brought traffic to a standstill in downtown, calling for urgent government action on climate change while commuters express frustration over the disruption.",
+    url: "https://example.com/climate-activists-protest",
     urlToImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
     publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-    source: { name: "Environmental News" },
-    category: "general",
-    content: "Full article content would go here..."
+    source: { name: "Environmental News Network" },
+    category: "environment",
+    content: "Climate activists from Extinction Rebellion blocked major downtown intersections today, demanding immediate government action on the climate crisis. The protesters say they're willing to face arrest to draw attention to what they call an existential threat to humanity. Commuters expressed anger over the disruption, with some calling the protesters 'radical extremists.' Police arrested 15 demonstrators."
   },
   {
     id: "4",
-    title: "Revolutionary Medical Discovery: New Treatment for Chronic Diseases",
-    description: "Scientists announce breakthrough in treating previously incurable chronic conditions, offering hope to millions of patients worldwide.",
-    url: "https://example.com/medical-discovery",
-    urlToImage: "https://images.unsplash.com/photo-1576091160399-112ba8a25e7f?w=800&h=600&fit=crop",
+    title: "Free Market Advocates Celebrate Supreme Court Decision on Business Regulations",
+    description: "The Supreme Court ruled in favor of business interests today, striking down what conservatives call 'burdensome' regulations while liberals warn of environmental and consumer harm.",
+    url: "https://example.com/supreme-court-business-ruling",
+    urlToImage: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
     publishedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
-    source: { name: "Health Today" },
-    category: "health",
-    content: "Full article content would go here..."
+    source: { name: "Business Daily" },
+    category: "politics",
+    content: "The Supreme Court today delivered a major victory to business interests, striking down federal regulations that conservatives argued were stifling economic growth. The 6-3 decision was celebrated by free market advocates who say it will unleash American entrepreneurship. Liberal justices dissented, warning that the ruling removes important consumer and environmental protections."
   },
   {
     id: "5",
-    title: "Space Exploration Milestone: First Human Mission to Mars Announced",
-    description: "NASA and international partners reveal plans for the first crewed mission to the Red Planet, scheduled for the next decade.",
-    url: "https://example.com/mars-mission",
-    urlToImage: "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=800&h=600&fit=crop",
+    title: "Social Justice Advocates Push for Police Reform After Latest Incident",
+    description: "Community leaders and activists are calling for comprehensive police reform following another controversial incident, while law enforcement groups defend their officers' actions.",
+    url: "https://example.com/police-reform-advocates",
+    urlToImage: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800&h=600&fit=crop",
     publishedAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(), // 10 hours ago
-    source: { name: "Space Weekly" },
-    category: "science",
-    content: "Full article content would go here..."
+    source: { name: "Social Justice Today" },
+    category: "politics",
+    content: "Community activists and social justice organizations are demanding immediate police reform after another controversial incident involving law enforcement. The groups say systemic racism continues to plague police departments nationwide and call for defunding police departments to redirect resources to community programs. Police unions defend their officers and say the calls for reform are politically motivated."
   },
   {
     id: "6",
-    title: "Sports History Made: Underdog Team Wins Championship",
-    description: "In an unprecedented upset, the underdog team defeats the reigning champions, creating one of the most memorable moments in sports history.",
-    url: "https://example.com/sports-upset",
-    urlToImage: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop",
+    title: "Balanced Report: New Economic Policy Shows Mixed Results in First Quarter",
+    description: "A bipartisan analysis of recent economic policies reveals both positive and negative impacts, with experts from across the political spectrum offering different interpretations of the data.",
+    url: "https://example.com/balanced-economic-report",
+    urlToImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop",
     publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-    source: { name: "Sports Central" },
-    category: "sports",
-    content: "Full article content would go here..."
+    source: { name: "Centrist News" },
+    category: "business",
+    content: "A comprehensive bipartisan analysis of recent economic policies shows mixed results in the first quarter. The report, conducted by economists from both major political parties, found that while some sectors benefited from the policies, others faced challenges. Republican economists emphasize the positive aspects while Democratic economists highlight areas needing improvement. The study provides a balanced view of the policy's overall impact."
   }
 ]
 

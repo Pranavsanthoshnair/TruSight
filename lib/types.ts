@@ -1,10 +1,3 @@
-export const mockResponse = {
-  bias: "Left-Leaning",
-  confidence: 0.82,
-  owner: "Example Media Corp",
-  missingPerspectives: ["Economic impact", "Opposition statement"],
-}
-
 export interface ChatMessage {
   id: string
   content: string

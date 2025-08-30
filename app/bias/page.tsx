@@ -9,7 +9,7 @@ import { InputBox } from "@/components/input-box"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ConfettiEffect } from "@/components/confetti-effect"
 import { XPNotification } from "@/components/xp-notification"
-import type { ChatHistory, ChatMessage } from "@/lib/mock-data"
+import type { ChatHistory, ChatMessage } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Target, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -246,45 +246,21 @@ function BiasDetectionContent() {
     } catch (error) {
       console.error('Error analyzing bias:', error)
       
-      // Fallback to mock data if API fails
-      const fallbackData = {
-        bias: "Center",
-        confidence: 0.5,
-        owner: "Unknown Publisher",
-        missingPerspectives: ["Analysis unavailable"],
-        reasoning: "API error - using fallback data"
-      }
-      
-      // Apply dynamic confidence calculation to fallback data
-      const dynamicConfidence = getDynamicConfidence(
-        fallbackData.bias, 
-        fallbackData.confidence, 
-        fallbackData.missingPerspectives
-      )
-      
-      const processedFallbackData = {
-        ...fallbackData,
-        confidence: dynamicConfidence
-      }
-      
-      const systemMessage: ChatMessage = {
+      // Create error message for user
+      const errorMessage: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: generateAnalysisSummary(processedFallbackData, content),
+        content: "Sorry, I couldn't analyze the bias at this time. Please check your connection and try again.",
         sender: "system",
         timestamp: new Date(),
-        type: "analysis",
       }
 
       const finalized = {
         ...updatedChat,
-        messages: [...updatedChat.messages, systemMessage],
+        messages: [...updatedChat.messages, errorMessage],
       }
       setCurrentChat(finalized)
       setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
       setIsLoading(false)
-
-      // Minimal score for fallback
-      setTruthScore((s) => s + 1)
     }
   }
 
