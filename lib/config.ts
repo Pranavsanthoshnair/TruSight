@@ -2,16 +2,7 @@
 export const config = {
   // News API Configuration
   news: {
-    // NewsAPI.org (100 requests/day free) - Primary choice
-    newsapi: {
-      apiKey: process.env.NEXT_PUBLIC_NEWSAPI_KEY || '',
-      baseUrl: 'https://newsapi.org/v2',
-      endpoints: {
-        topHeadlines: '/top-headlines',
-        search: '/everything'
-      }
-    },
-    // GNews API (100 requests/day free) - Fallback
+    // GNews API (100 requests/day free)
     gnews: {
       apiKey: process.env.NEXT_PUBLIC_GNEWS_API_KEY || '',
       baseUrl: 'https://gnews.io/api/v4',
@@ -34,7 +25,7 @@ export const config = {
 // Helper function to check if API keys are configured
 export const hasValidApiKey = (): boolean => {
   // Check environment variables first
-  const hasEnvKey = !!(config.news.newsapi.apiKey || config.news.gnews.apiKey)
+  const hasEnvKey = !!config.news.gnews.apiKey
   
   // Also check localStorage for backward compatibility
   if (typeof window !== 'undefined') {
@@ -49,12 +40,7 @@ export const hasValidApiKey = (): boolean => {
 
 // Helper function to get the best available API configuration
 export const getBestNewsApiConfig = () => {
-  // Check NewsAPI first (user's preference)
-  if (config.news.newsapi.apiKey) {
-    return { provider: 'newsapi', config: config.news.newsapi }
-  }
-  
-  // Check GNews as fallback
+  // Check GNews API key
   if (config.news.gnews.apiKey) {
     return { provider: 'gnews', config: config.news.gnews }
   }

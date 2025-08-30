@@ -1,14 +1,10 @@
 import { NewsArticle } from "@/components/news-card"
 import { config, hasValidApiKey, getBestNewsApiConfig } from "./config"
 
-// Free News API endpoints (you can replace these with your preferred API)
+// GNews API endpoint
 const NEWS_API_ENDPOINTS = {
   // GNews API (free tier: 100 requests/day)
   gnews: "https://gnews.io/api/v4/top-headlines",
-  // NewsAPI (free tier: 100 requests/day)
-  newsapi: "https://newsapi.org/v2/top-headlines",
-  // Alternative: NewsData.io (free tier: 200 requests/day)
-  newsdata: "https://newsdata.io/api/1/news",
 }
 
 // Mock data as fallback when API fails
@@ -172,8 +168,6 @@ export class NewsService {
     try {
       if (provider === 'gnews') {
         return await this.fetchFromGNews(apiSettings, category, country, pageSize)
-      } else if (provider === 'newsapi') {
-        return await this.fetchFromNewsAPI(apiSettings, category, country, pageSize)
       }
     } catch (error) {
       console.error(`Failed to fetch from ${provider}:`, error)
@@ -215,33 +209,6 @@ export class NewsService {
     return articles
   }
 
-  private async fetchFromNewsAPI(
-    apiSettings: any,
-    category: string,
-    country: string,
-    pageSize: number
-  ): Promise<NewsArticle[]> {
-    const params = new URLSearchParams({
-      country: country,
-      pageSize: pageSize.toString(),
-      apiKey: apiSettings.apiKey
-    })
-
-    // Add category if specified and not general
-    if (category && category !== "general") {
-      params.append('category', category)
-    }
-
-    const url = `${apiSettings.baseUrl}${apiSettings.endpoints.topHeadlines}?${params}`
-    
-    const response = await fetch(url)
-    if (!response.ok) {
-      throw new Error(`NewsAPI error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return this.transformNewsApiData(data.articles || [])
-  }
 
   private async searchFromRealApi(query: string, pageSize: number): Promise<NewsArticle[]> {
     const apiConfig = getBestNewsApiConfig()
@@ -254,8 +221,6 @@ export class NewsService {
     try {
       if (provider === 'gnews') {
         return await this.searchFromGNews(apiSettings, query, pageSize)
-      } else if (provider === 'newsapi') {
-        return await this.searchFromNewsAPI(apiSettings, query, pageSize)
       }
     } catch (error) {
       console.error(`Failed to search from ${provider}:`, error)
@@ -287,29 +252,6 @@ export class NewsService {
     return this.transformGNewsData(data.articles || [])
   }
 
-  private async searchFromNewsAPI(
-    apiSettings: any,
-    query: string,
-    pageSize: number
-  ): Promise<NewsArticle[]> {
-    const params = new URLSearchParams({
-      q: query,
-      pageSize: pageSize.toString(),
-      apiKey: apiSettings.apiKey,
-      sortBy: 'publishedAt',
-      language: 'en'
-    })
-
-    const url = `${apiSettings.baseUrl}${apiSettings.endpoints.search}?${params}`
-    
-    const response = await fetch(url)
-    if (!response.ok) {
-      throw new Error(`NewsAPI search error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return this.transformNewsApiData(data.articles || [])
-  }
 
   private transformGNewsData(articles: any[]): NewsArticle[] {
     return articles.map((article, index) => ({
@@ -325,19 +267,6 @@ export class NewsService {
     }))
   }
 
-  private transformNewsApiData(articles: any[]): NewsArticle[] {
-    return articles.map((article, index) => ({
-      id: `newsapi_${index}_${Date.now()}`,
-      title: article.title || "No Title",
-      description: article.description || "No description available",
-      url: article.url || "#",
-      urlToImage: article.urlToImage,
-      publishedAt: article.publishedAt || new Date().toISOString(),
-      source: { name: article.source?.name || "Unknown Source" },
-      category: "general", // NewsAPI doesn't provide category in search results
-      content: article.content || ""
-    }))
-  }
 
   private filterNewsByCategory(news: NewsArticle[], category: string): NewsArticle[] {
     if (!category || category === "general") {

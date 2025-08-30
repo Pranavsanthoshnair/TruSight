@@ -1,11 +1,11 @@
-# Setting Up NewsAPI for TruSight
+# Setting Up GNews API for TruSight
 
 ## Overview
-Your TruSight app is now configured to fetch real-time news from NewsAPI.org instead of using hardcoded mock data. The app will automatically fall back to mock data if the API is unavailable.
+Your TruSight app is now configured to fetch real-time news from GNews API instead of using hardcoded mock data. The app will automatically fall back to mock data if the API is unavailable.
 
-## Step 1: Get Your NewsAPI Key
+## Step 1: Get Your GNews API Key
 
-1. Go to [https://newsapi.org/](https://newsapi.org/)
+1. Go to [https://gnews.io/](https://gnews.io/)
 2. Sign up for a free account
 3. Get your API key from the dashboard
 4. **Free tier**: 100 requests/day
@@ -15,11 +15,8 @@ Your TruSight app is now configured to fetch real-time news from NewsAPI.org ins
 Create a `.env.local` file in your project root:
 
 ```bash
-# NewsAPI.org (Primary choice)
-NEXT_PUBLIC_NEWSAPI_KEY=your_newsapi_key_here
-
-# Optional: GNews API as fallback
-# NEXT_PUBLIC_GNEWS_API_KEY=your_gnews_api_key_here
+# GNews API
+NEXT_PUBLIC_GNEWS_API_KEY=your_gnews_api_key_here
 ```
 
 ## Step 3: Restart Your Development Server
@@ -33,13 +30,12 @@ npm run dev
 ## Step 4: Verify Setup
 
 1. Open your app in the browser
-2. You should see a green "Live News API Connected" indicator
-3. Real-time news should load automatically
-4. Check the console for any API-related errors
+2. Real-time news should load automatically
+3. Check the console for any API-related errors
 
-## NewsAPI Features
+## GNews API Features
 
-- ✅ Top headlines by country and category
+- ✅ Top headlines by country
 - ✅ Advanced search with filters
 - ✅ Sort by relevance, date, popularity
 - ✅ Multiple languages support
@@ -74,7 +70,7 @@ If the API fails for any reason, the app will:
 
 ## Cost Considerations
 
-- **NewsAPI**: Free tier includes 100 requests/day
+- **GNews API**: Free tier includes 100 requests/day
 - **Typical usage**: ~10-20 requests per user session
 - **Recommendation**: Perfect for development and small projects
 
@@ -91,5 +87,5 @@ Once your API is working:
 If you encounter issues:
 1. Check the browser console for error messages
 2. Verify your API key is working with a simple curl request
-3. Check [NewsAPI status page](https://newsapi.org/)
+3. Check [GNews status page](https://gnews.io/)
 4. Review the error handling in your news service
