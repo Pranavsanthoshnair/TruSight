@@ -146,6 +146,15 @@ function BiasDetectionContent() {
     setCurrentChat(newChat)
   }
 
+  const handleDeleteChat = (chatId: string) => {
+    setChatHistories((prev) => prev.filter(chat => chat.id !== chatId))
+    
+    // If the deleted chat was the current one, clear current chat
+    if (currentChat?.id === chatId) {
+      setCurrentChat(null)
+    }
+  }
+
   const sendMessage = async (content: string) => {
     // Prevent multiple simultaneous analyses
     if (isLoading) {
@@ -284,6 +293,7 @@ function BiasDetectionContent() {
           currentChat={currentChat}
           onSelectChat={setCurrentChat}
           onNewAnalysis={startNewAnalysis}
+          onDeleteChat={handleDeleteChat}
         />
       </div>
 
@@ -341,6 +351,7 @@ function BiasDetectionContent() {
                 startNewAnalysis()
                 setSidebarOpen(false)
               }}
+              onDeleteChat={handleDeleteChat}
             />
           </motion.div>
         </motion.div>
