@@ -5,7 +5,7 @@ TruSight is a Next.js application that helps users analyze news articles for pot
 ## Features
 
 - 📰 **Real-time News**: Fetch live news from external APIs (GNews, NewsAPI)
-- 🔍 **Bias Detection**: AI-powered analysis of articles for potential bias
+- 🤖 **AI-Powered Bias Detection**: Advanced bias analysis using Groq's Llama 3.1 70B model
 - 📊 **News Categories**: Filter news by category (technology, business, sports, etc.)
 - 🎨 **Modern UI**: Beautiful, responsive interface built with Tailwind CSS
 - 🌙 **Dark Mode**: Theme switching with next-themes
@@ -31,9 +31,9 @@ cd TruSight
 npm install
 ```
 
-3. Set up your news API key (optional but recommended):
-   - Get a free API key from [GNews](https://gnews.io/) (100 requests/day)
-   - Or use [NewsAPI.org](https://newsapi.org/) (100 requests/day)
+3. Set up your API keys:
+   - **Groq API Key** (required for bias detection): Get a free API key from [Groq](https://console.groq.com/)
+   - **News API Key** (optional but recommended): Get a free API key from [GNews](https://gnews.io/) (100 requests/day) or [NewsAPI.org](https://newsapi.org/) (100 requests/day)
    - See [SETUP_NEWS_API.md](./SETUP_NEWS_API.md) for detailed instructions
 
 4. Run the development server:
@@ -43,7 +43,21 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## News API Setup
+## API Setup
+
+### Groq API (Required for Bias Detection)
+
+The bias detection feature uses Groq's Llama 3.1 70B model for advanced AI-powered analysis:
+
+1. **Get a Groq API Key**:
+   - Sign up at [Groq Console](https://console.groq.com/)
+   - Create a new API key
+
+2. **Configure the API**:
+   - Add `GROQ_API_KEY=your_api_key_here` to your `.env.local` file
+   - Restart your development server
+
+### News API (Optional)
 
 To get real-time news instead of sample data:
 

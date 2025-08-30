@@ -22,7 +22,7 @@ export default function AnalyzePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [truthScore, setTruthScore] = useState(0)
-  const [analysisData, setAnalysisData] = useState<{ bias: string; confidence: number; owner: string; missingPerspectives: string[] } | null>(null)
+  const [analysisData, setAnalysisData] = useState<{ bias: string; confidence: number; owner: string; missingPerspectives: string[]; reasoning?: string } | null>(null)
 
   // Load persisted chats and score
   useEffect(() => {
@@ -30,6 +30,9 @@ export default function AnalyzePage() {
       const saved = localStorage.getItem("ts_chats")
       const savedCurrent = localStorage.getItem("ts_current")
       const savedScore = localStorage.getItem("ts_score")
+      const savedAnalysis = localStorage.getItem("ts_analysis")
+      const savedShowAnalysis = localStorage.getItem("ts_show_analysis")
+      
       if (saved) {
         const parsed = JSON.parse(saved) as any[]
         const restored = parsed.map((c) => ({
@@ -44,6 +47,8 @@ export default function AnalyzePage() {
         }
       }
       if (savedScore) setTruthScore(parseInt(savedScore))
+      if (savedAnalysis) setAnalysisData(JSON.parse(savedAnalysis))
+      if (savedShowAnalysis) setShowAnalysis(JSON.parse(savedShowAnalysis))
     } catch {}
   }, [])
 
@@ -58,8 +63,10 @@ export default function AnalyzePage() {
       localStorage.setItem("ts_chats", JSON.stringify(serializable))
       localStorage.setItem("ts_current", currentChat?.id || "")
       localStorage.setItem("ts_score", String(truthScore))
+      localStorage.setItem("ts_analysis", JSON.stringify(analysisData))
+      localStorage.setItem("ts_show_analysis", JSON.stringify(showAnalysis))
     } catch {}
-  }, [chatHistories, currentChat, truthScore])
+  }, [chatHistories, currentChat, truthScore, analysisData, showAnalysis])
 
   const todayString = useMemo(() => {
     const d = new Date()
@@ -83,7 +90,7 @@ export default function AnalyzePage() {
     setShowAnalysis(false)
   }
 
-  const sendMessage = (content: string) => {
+  const sendMessage = async (content: string) => {
     // Ensure a chat exists; if not, create one so the sidebar updates immediately
     let activeChat = currentChat
     if (!activeChat) {
@@ -115,20 +122,24 @@ export default function AnalyzePage() {
     setChatHistories((prev) => prev.map((chat) => (chat.id === activeChat!.id ? updatedChat : chat)))
     setIsLoading(true)
 
-    // Move random generation to a separate function to prevent hydration issues
-    const generateAnalysisData = () => {
-      const biases = ["Left-Leaning", "Center", "Right-Leaning"]
-      const bias = biases[Math.floor(Math.random() * biases.length)]
-      const confidence = Math.round((0.6 + Math.random() * 0.4) * 100) / 100 // 0.6..1.0
-      const owner = "Example Media Corp"
-      const missingPerspectives = ["Economic impact", "Opposition statement", "Local community view"].filter(
-        () => Math.random() > 0.4,
-      )
-      return { bias, confidence, owner, missingPerspectives }
-    }
+    try {
+      // Call the Groq API for bias analysis
+      const response = await fetch('/api/analyze-bias', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: content
+        })
+      })
 
-    setTimeout(() => {
-      const analysisData = generateAnalysisData()
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+      }
+
+      const analysisData = await response.json()
+      
       const systemMessage: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         content: generateAnalysisSummary(analysisData, content),
@@ -147,16 +158,47 @@ export default function AnalyzePage() {
       setIsLoading(false)
       setAnalysisData(analysisData)
 
-      // Gamified score 1-5
-      const inc = 1 + Math.floor(Math.random() * 5)
+      // Gamified score based on confidence
+      const inc = Math.max(1, Math.floor(analysisData.confidence * 5))
       setTruthScore((s) => s + inc)
 
-      // Silent rewards; no poppers/notifications
-    }, 1200)
+    } catch (error) {
+      console.error('Error analyzing bias:', error)
+      
+      // Fallback to mock data if API fails
+      const fallbackData = {
+        bias: "Center",
+        confidence: 0.5,
+        owner: "Unknown Publisher",
+        missingPerspectives: ["Analysis unavailable"],
+        reasoning: "API error - using fallback data"
+      }
+      
+      const systemMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        content: generateAnalysisSummary(fallbackData, content),
+        sender: "system",
+        timestamp: new Date(),
+        type: "analysis",
+      }
+
+      const finalized = {
+        ...updatedChat,
+        messages: [...updatedChat.messages, systemMessage],
+      }
+      setCurrentChat(finalized)
+      setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
+      setShowAnalysis(true)
+      setIsLoading(false)
+      setAnalysisData(fallbackData)
+
+      // Minimal score for fallback
+      setTruthScore((s) => s + 1)
+    }
   }
 
   function generateAnalysisSummary(
-    data: { bias: string; confidence: number; owner: string; missingPerspectives: string[] },
+    data: { bias: string; confidence: number; owner: string; missingPerspectives: string[]; reasoning?: string },
     userText: string,
   ) {
     const lines = [
@@ -166,6 +208,12 @@ export default function AnalyzePage() {
         ? `Missing perspectives: ${data.missingPerspectives.join(", ")}`
         : "Missing perspectives: none detected",
     ]
+    
+    // Add reasoning if available
+    if (data.reasoning && data.reasoning.trim()) {
+      lines.push(`\nAnalysis: ${data.reasoning}`)
+    }
+    
     return lines.join("\n")
   }
 
@@ -344,10 +392,9 @@ export default function AnalyzePage() {
 
           {showAnalysis && (
             <motion.div
-              className="hidden lg:block w-80 border-l border-border bg-sidebar p-4 overflow-y-auto"
+              className="hidden lg:block w-96 border-l border-border bg-background/50 backdrop-blur-sm p-6 overflow-y-auto"
               initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               {analysisData && (
@@ -356,6 +403,7 @@ export default function AnalyzePage() {
                   confidence={analysisData.confidence}
                   owner={analysisData.owner}
                   missingPerspectives={analysisData.missingPerspectives}
+                  reasoning={analysisData.reasoning}
                 />
               )}
             </motion.div>
@@ -365,7 +413,7 @@ export default function AnalyzePage() {
         {/* Mobile Analysis section below chat */}
         {showAnalysis && (
           <motion.div 
-            className="lg:hidden border-t border-border bg-sidebar p-4 overflow-x-hidden"
+            className="lg:hidden border-t border-border bg-background/50 backdrop-blur-sm p-6 overflow-x-hidden"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -376,6 +424,7 @@ export default function AnalyzePage() {
                 confidence={analysisData.confidence}
                 owner={analysisData.owner}
                 missingPerspectives={analysisData.missingPerspectives}
+                reasoning={analysisData.reasoning}
               />
             )}
           </motion.div>

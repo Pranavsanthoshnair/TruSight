@@ -24,7 +24,6 @@ export function Navbar() {
   const authenticatedNavItems = [
     { href: "/", label: "Home" },
     { href: "/bias", label: "Bias Detection" },
-    { href: "/analyze", label: "Analyze" },
     { href: "/profile", label: "Profile" },
     { href: "/about", label: "About" },
   ]
@@ -36,9 +35,9 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
             <motion.div
               className="flex items-center space-x-2"
               whileHover={{ scale: 1.05 }}
@@ -51,8 +50,8 @@ export function Navbar() {
             </motion.div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-8">
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden md:flex md:items-center md:space-x-8 flex-1 justify-center">
             {currentNavItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <motion.div
@@ -76,16 +75,7 @@ export function Navbar() {
           </div>
 
           {/* Right side - Search, Theme Toggle, and Auth */}
-          <div className="flex items-center space-x-4">
-            {/* Search Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:flex"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center space-x-4 flex-shrink-0">
 
             {/* Theme Toggle */}
             <ThemeToggle />
