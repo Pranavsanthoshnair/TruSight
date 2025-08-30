@@ -6,7 +6,6 @@ import { motion } from "framer-motion"
 import { Sidebar } from "@/components/sidebar"
 import { ChatWindow } from "@/components/chat-window"
 import { InputBox } from "@/components/input-box"
-import { AnalysisCard } from "@/components/analysis-card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ConfettiEffect } from "@/components/confetti-effect"
 import { XPNotification } from "@/components/xp-notification"
@@ -20,13 +19,11 @@ function BiasDetectionContent() {
   const searchParams = useSearchParams()
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([])
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null)
-  const [showAnalysis, setShowAnalysis] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const [showXPNotification, setShowXPNotification] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [truthScore, setTruthScore] = useState(0)
-  const [analysisData, setAnalysisData] = useState<{ bias: string; confidence: number; owner: string; missingPerspectives: string[]; reasoning?: string } | null>(null)
 
   // Check for article data from news page
   const articleParam = searchParams.get('article')
@@ -47,8 +44,6 @@ function BiasDetectionContent() {
       const saved = localStorage.getItem("ts_chats")
       const savedCurrent = localStorage.getItem("ts_current")
       const savedScore = localStorage.getItem("ts_score")
-      const savedAnalysis = localStorage.getItem("ts_analysis")
-      const savedShowAnalysis = localStorage.getItem("ts_show_analysis")
       
       if (saved) {
         const parsed = JSON.parse(saved) as any[]
@@ -64,8 +59,6 @@ function BiasDetectionContent() {
         }
       }
       if (savedScore) setTruthScore(parseInt(savedScore))
-      if (savedAnalysis) setAnalysisData(JSON.parse(savedAnalysis))
-      if (savedShowAnalysis) setShowAnalysis(JSON.parse(savedShowAnalysis))
     } catch {}
   }, [])
 
@@ -88,10 +81,40 @@ function BiasDetectionContent() {
       localStorage.setItem("ts_chats", JSON.stringify(serializable))
       localStorage.setItem("ts_current", currentChat?.id || "")
       localStorage.setItem("ts_score", String(truthScore))
-      localStorage.setItem("ts_analysis", JSON.stringify(analysisData))
-      localStorage.setItem("ts_show_analysis", JSON.stringify(showAnalysis))
     } catch {}
-  }, [chatHistories, currentChat, truthScore, analysisData, showAnalysis])
+  }, [chatHistories, currentChat, truthScore])
+
+  // Calculate dynamic confidence based on bias type and missing perspectives (shared with AnalysisCard)
+  const getDynamicConfidence = (bias: string, confidence: number, missingPerspectives: string[]): number => {
+    let adjustedConfidence = confidence
+    
+    // Adjust confidence based on missing perspectives
+    if (missingPerspectives.length > 0) {
+      // Reduce confidence if there are missing perspectives
+      const perspectivePenalty = Math.min(0.3, missingPerspectives.length * 0.1)
+      adjustedConfidence = Math.max(0.1, adjustedConfidence - perspectivePenalty)
+    }
+    
+    // Adjust confidence based on bias type
+    const biasLower = bias.toLowerCase()
+    switch (biasLower) {
+      case "left-leaning":
+      case "right-leaning":
+        // Stronger bias types get confidence boost
+        adjustedConfidence = Math.min(1, adjustedConfidence * 1.2)
+        break
+      case "center":
+        // Center bias gets moderate confidence
+        adjustedConfidence = adjustedConfidence * 0.9
+        break
+      case "neutral":
+        // Neutral bias gets lower confidence as it's harder to determine
+        adjustedConfidence = adjustedConfidence * 0.8
+        break
+    }
+    
+    return Math.max(0.1, Math.min(1, adjustedConfidence))
+  }
 
   const todayString = useMemo(() => {
     const d = new Date()
@@ -128,10 +151,14 @@ function BiasDetectionContent() {
     }
     setChatHistories((prev) => [newChat, ...prev])
     setCurrentChat(newChat)
-    setShowAnalysis(false)
   }
 
   const sendMessage = async (content: string) => {
+    // Prevent multiple simultaneous analyses
+    if (isLoading) {
+      return
+    }
+
     // Ensure a chat exists; if not, create one so the sidebar updates immediately
     let activeChat = currentChat
     if (!activeChat) {
@@ -184,9 +211,21 @@ function BiasDetectionContent() {
 
       const analysisData = await response.json()
       
+      // Apply dynamic confidence calculation to the analysis data
+      const dynamicConfidence = getDynamicConfidence(
+        analysisData.bias, 
+        analysisData.confidence, 
+        analysisData.missingPerspectives
+      )
+      
+      const processedAnalysisData = {
+        ...analysisData,
+        confidence: dynamicConfidence
+      }
+      
       const systemMessage: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: generateAnalysisSummary(analysisData, content),
+        content: generateAnalysisSummary(processedAnalysisData, content),
         sender: "system",
         timestamp: new Date(),
         type: "analysis",
@@ -198,12 +237,10 @@ function BiasDetectionContent() {
       }
       setCurrentChat(finalized)
       setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
-      setShowAnalysis(true)
       setIsLoading(false)
-      setAnalysisData(analysisData)
 
       // Gamified score based on confidence
-      const inc = Math.max(1, Math.floor(analysisData.confidence * 5))
+      const inc = Math.max(1, Math.floor(processedAnalysisData.confidence * 5))
       setTruthScore((s) => s + inc)
 
     } catch (error) {
@@ -218,9 +255,21 @@ function BiasDetectionContent() {
         reasoning: "API error - using fallback data"
       }
       
+      // Apply dynamic confidence calculation to fallback data
+      const dynamicConfidence = getDynamicConfidence(
+        fallbackData.bias, 
+        fallbackData.confidence, 
+        fallbackData.missingPerspectives
+      )
+      
+      const processedFallbackData = {
+        ...fallbackData,
+        confidence: dynamicConfidence
+      }
+      
       const systemMessage: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: generateAnalysisSummary(fallbackData, content),
+        content: generateAnalysisSummary(processedFallbackData, content),
         sender: "system",
         timestamp: new Date(),
         type: "analysis",
@@ -232,9 +281,7 @@ function BiasDetectionContent() {
       }
       setCurrentChat(finalized)
       setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
-      setShowAnalysis(true)
       setIsLoading(false)
-      setAnalysisData(fallbackData)
 
       // Minimal score for fallback
       setTruthScore((s) => s + 1)
@@ -245,6 +292,7 @@ function BiasDetectionContent() {
     data: { bias: string; confidence: number; owner: string; missingPerspectives: string[]; reasoning?: string },
     userText: string,
   ) {
+    // Use the confidence that's already been processed with dynamic calculation
     const lines = [
       `Detected Bias: ${data.bias} (confidence ${Math.round(data.confidence * 100)}%)`,
       `Publisher: ${data.owner}`,
@@ -340,9 +388,9 @@ function BiasDetectionContent() {
         </motion.div>
       )}
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Simplified Header */}
-        <header className="border-b border-border bg-background/95 backdrop-blur-sm px-4 py-3">
+        <header className="border-b border-border bg-background/95 backdrop-blur-sm px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button 
@@ -383,11 +431,16 @@ function BiasDetectionContent() {
         </header>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex min-h-0">
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <ChatWindow messages={currentChat?.messages || []} isLoading={isLoading} />
-            <div className="border-t border-border bg-background/50">
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Chat Messages - Scrollable */}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ChatWindow messages={currentChat?.messages || []} isLoading={isLoading} />
+            </div>
+            
+            {/* Input Area - Fixed at bottom */}
+            <div className="border-t border-border bg-background/50 flex-shrink-0">
               <InputBox
                 onSendMessage={sendMessage}
                 onSendFiles={(fileNames) => {
@@ -412,51 +465,7 @@ function BiasDetectionContent() {
               />
             </div>
           </div>
-
-          {/* Analysis Panel - Desktop */}
-          {showAnalysis && (
-            <motion.div
-              className="hidden lg:block w-96 border-l border-border bg-background/50 backdrop-blur-sm overflow-y-auto"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <div className="p-6">
-                {analysisData && (
-                  <AnalysisCard
-                    bias={analysisData.bias}
-                    confidence={analysisData.confidence}
-                    owner={analysisData.owner}
-                    missingPerspectives={analysisData.missingPerspectives}
-                    reasoning={analysisData.reasoning}
-                  />
-                )}
-              </div>
-            </motion.div>
-          )}
         </div>
-
-        {/* Analysis Panel - Mobile */}
-        {showAnalysis && (
-          <motion.div 
-            className="lg:hidden border-t border-border bg-background/50 backdrop-blur-sm overflow-y-auto max-h-96"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <div className="p-4">
-              {analysisData && (
-                <AnalysisCard
-                  bias={analysisData.bias}
-                  confidence={analysisData.confidence}
-                  owner={analysisData.owner}
-                  missingPerspectives={analysisData.missingPerspectives}
-                  reasoning={analysisData.reasoning}
-                />
-              )}
-            </div>
-          </motion.div>
-        )}
       </div>
     </div>
   )
