@@ -1,4 +1,5 @@
 import { NewsArticle } from "@/components/news-card"
+import { config, hasValidApiKey, getBestNewsApiConfig } from "./config"
 
 // Free News API endpoints (you can replace these with your preferred API)
 const NEWS_API_ENDPOINTS = {
@@ -88,19 +89,13 @@ export interface NewsApiResponse {
 
 export class NewsService {
   private static instance: NewsService
-  private apiKey: string | null = null
   private lastFetchTime: number = 0
   private cachedNews: NewsArticle[] = []
+  private cacheDuration: number = 30 * 60 * 1000 // 30 minutes
 
   private constructor() {
-    // Try to get API key from environment variables
-    if (typeof window !== 'undefined') {
-      // Client-side: check localStorage or prompt user
-      const savedKey = localStorage.getItem('trusight_news_api_key')
-      if (savedKey) {
-        this.apiKey = savedKey
-      }
-    }
+    // No need to check localStorage for API key anymore
+    // API keys are now managed through environment variables
   }
 
   public static getInstance(): NewsService {
@@ -110,31 +105,26 @@ export class NewsService {
     return NewsService.instance
   }
 
-  public setApiKey(key: string): void {
-    this.apiKey = key
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('trusight_news_api_key', key)
-    }
-  }
-
   public async fetchTopHeadlines(
     category: string = "general",
     country: string = "us",
     pageSize: number = 20
   ): Promise<NewsArticle[]> {
-    // Check if we have cached data and it's recent (less than 1 hour old)
+    // Check if we have cached data and it's recent
     const now = Date.now()
-    if (this.cachedNews.length > 0 && (now - this.lastFetchTime) < 60 * 60 * 1000) {
+    if (this.cachedNews.length > 0 && (now - this.lastFetchTime) < this.cacheDuration) {
       return this.filterNewsByCategory(this.cachedNews, category)
     }
 
     try {
       // Try to fetch from real API first
-      const news = await this.fetchFromRealApi(category, country, pageSize)
-      if (news.length > 0) {
-        this.cachedNews = news
-        this.lastFetchTime = now
-        return this.filterNewsByCategory(news, category)
+      if (hasValidApiKey()) {
+        const news = await this.fetchFromRealApi(category, country, pageSize)
+        if (news.length > 0) {
+          this.cachedNews = news
+          this.lastFetchTime = now
+          return this.filterNewsByCategory(news, category)
+        }
       }
     } catch (error) {
       console.warn("Failed to fetch from real API, using mock data:", error)
@@ -149,9 +139,11 @@ export class NewsService {
   public async searchNews(query: string, pageSize: number = 20): Promise<NewsArticle[]> {
     try {
       // Try to fetch from real API first
-      const news = await this.searchFromRealApi(query, pageSize)
-      if (news.length > 0) {
-        return news
+      if (hasValidApiKey()) {
+        const news = await this.searchFromRealApi(query, pageSize)
+        if (news.length > 0) {
+          return news
+        }
       }
     } catch (error) {
       console.warn("Failed to search from real API, using mock data:", error)
@@ -170,58 +162,153 @@ export class NewsService {
     country: string,
     pageSize: number
   ): Promise<NewsArticle[]> {
-    if (!this.apiKey) {
-      throw new Error("No API key provided")
+    const apiConfig = getBestNewsApiConfig()
+    if (!apiConfig) {
+      throw new Error("No valid API configuration found")
     }
 
-    // Try GNews API first (more generous free tier)
+    const { provider, config: apiSettings } = apiConfig
+
     try {
-      const gnewsUrl = `${NEWS_API_ENDPOINTS.gnews}?country=${country}&category=${category}&max=${pageSize}&apikey=${this.apiKey}`
-      const response = await fetch(gnewsUrl)
-      
-      if (response.ok) {
-        const data = await response.json()
-        return this.transformGNewsData(data.articles || [])
+      if (provider === 'gnews') {
+        return await this.fetchFromGNews(apiSettings, category, country, pageSize)
+      } else if (provider === 'newsapi') {
+        return await this.fetchFromNewsAPI(apiSettings, category, country, pageSize)
       }
     } catch (error) {
-      console.warn("GNews API failed, trying NewsAPI:", error)
+      console.error(`Failed to fetch from ${provider}:`, error)
+      throw error
     }
 
-    // Try NewsAPI as fallback
-    try {
-      const newsapiUrl = `${NEWS_API_ENDPOINTS.newsapi}?country=${country}&category=${category}&pageSize=${pageSize}&apiKey=${this.apiKey}`
-      const response = await fetch(newsapiUrl)
-      
-      if (response.ok) {
-        const data = await response.json()
-        return this.transformNewsApiData(data.articles || [])
-      }
-    } catch (error) {
-      console.warn("NewsAPI failed:", error)
+    throw new Error("Unsupported API provider")
+  }
+
+  private async fetchFromGNews(
+    apiSettings: any,
+    category: string,
+    country: string,
+    pageSize: number
+  ): Promise<NewsArticle[]> {
+    const params = new URLSearchParams({
+      country: country,
+      max: pageSize.toString(),
+      apikey: apiSettings.apiKey
+    })
+
+    // GNews doesn't support category filtering in top-headlines, so we'll fetch general news
+    // and filter by category later if needed
+    const url = `${apiSettings.baseUrl}${apiSettings.endpoints.topHeadlines}?${params}`
+    
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`GNews API error: ${response.status} ${response.statusText}`)
     }
 
-    throw new Error("All APIs failed")
+    const data = await response.json()
+    const articles = this.transformGNewsData(data.articles || [])
+    
+    // Filter by category if specified and not general
+    if (category && category !== "general") {
+      return articles.filter(article => article.category === category)
+    }
+    
+    return articles
+  }
+
+  private async fetchFromNewsAPI(
+    apiSettings: any,
+    category: string,
+    country: string,
+    pageSize: number
+  ): Promise<NewsArticle[]> {
+    const params = new URLSearchParams({
+      country: country,
+      pageSize: pageSize.toString(),
+      apiKey: apiSettings.apiKey
+    })
+
+    // Add category if specified and not general
+    if (category && category !== "general") {
+      params.append('category', category)
+    }
+
+    const url = `${apiSettings.baseUrl}${apiSettings.endpoints.topHeadlines}?${params}`
+    
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`NewsAPI error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return this.transformNewsApiData(data.articles || [])
   }
 
   private async searchFromRealApi(query: string, pageSize: number): Promise<NewsArticle[]> {
-    if (!this.apiKey) {
-      throw new Error("No API key provided")
+    const apiConfig = getBestNewsApiConfig()
+    if (!apiConfig) {
+      throw new Error("No valid API configuration found")
     }
 
-    // Try GNews search API
+    const { provider, config: apiSettings } = apiConfig
+
     try {
-      const gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&max=${pageSize}&apikey=${this.apiKey}`
-      const response = await fetch(gnewsUrl)
-      
-      if (response.ok) {
-        const data = await response.json()
-        return this.transformGNewsData(data.articles || [])
+      if (provider === 'gnews') {
+        return await this.searchFromGNews(apiSettings, query, pageSize)
+      } else if (provider === 'newsapi') {
+        return await this.searchFromNewsAPI(apiSettings, query, pageSize)
       }
     } catch (error) {
-      console.warn("GNews search API failed:", error)
+      console.error(`Failed to search from ${provider}:`, error)
+      throw error
     }
 
-    throw new Error("Search API failed")
+    throw new Error("Unsupported API provider")
+  }
+
+  private async searchFromGNews(
+    apiSettings: any,
+    query: string,
+    pageSize: number
+  ): Promise<NewsArticle[]> {
+    const params = new URLSearchParams({
+      q: query,
+      max: pageSize.toString(),
+      apikey: apiSettings.apiKey
+    })
+
+    const url = `${apiSettings.baseUrl}${apiSettings.endpoints.search}?${params}`
+    
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`GNews search API error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return this.transformGNewsData(data.articles || [])
+  }
+
+  private async searchFromNewsAPI(
+    apiSettings: any,
+    query: string,
+    pageSize: number
+  ): Promise<NewsArticle[]> {
+    const params = new URLSearchParams({
+      q: query,
+      pageSize: pageSize.toString(),
+      apiKey: apiSettings.apiKey,
+      sortBy: 'publishedAt',
+      language: 'en'
+    })
+
+    const url = `${apiSettings.baseUrl}${apiSettings.endpoints.search}?${params}`
+    
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`NewsAPI search error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return this.transformNewsApiData(data.articles || [])
   }
 
   private transformGNewsData(articles: any[]): NewsArticle[] {
