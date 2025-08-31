@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Trash2, Plus, Bot } from "lucide-react"
+import { Trash2, Plus, Bot, User } from "lucide-react"
 import type { ChatHistory } from "@/lib/types"
+import { useUser } from "@clerk/nextjs"
 
 interface SidebarProps {
   chatHistories: ChatHistory[]
@@ -17,6 +18,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysis, onDeleteChat }: SidebarProps) {
+  const { user, isLoaded } = useUser()
+  
   const formatDate = (date: Date) => {
     const now = new Date()
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
@@ -32,6 +35,24 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
     })
   }
 
+  // Show loading state while Clerk is loading user data
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col h-full bg-sidebar">
+        <div className="p-4 sm:p-6 border-b border-sidebar-border flex-shrink-0">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-sidebar-accent/20 rounded-full animate-pulse" />
+            <div className="min-w-0 flex-1">
+              <div className="h-4 bg-sidebar-accent/20 rounded animate-pulse mb-2" />
+              <div className="h-3 bg-sidebar-accent/20 rounded animate-pulse w-24" />
+            </div>
+          </div>
+          <div className="h-10 bg-sidebar-accent/20 rounded animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full bg-sidebar">
       {/* Profile Section */}
@@ -44,14 +65,18 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
       >
         <div className="flex items-center gap-3 mb-4">
           <Avatar className="h-10 w-10 sm:h-12 sm:w-12 ring-2 ring-sidebar-accent/20 hover:ring-sidebar-accent/40 transition-all duration-300 hover-scale">
-            <AvatarImage src="/robot-avatar.svg" />
+            <AvatarImage src={user?.imageUrl} />
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-serif text-lg flex items-center justify-center">
-              <Bot className="h-6 w-6" />
+              {user?.firstName?.charAt(0) || user?.emailAddresses?.[0]?.emailAddress?.charAt(0) || <User className="h-6 w-6" />}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <h3 className="font-serif font-semibold text-sidebar-foreground text-sm sm:text-base truncate">Bias Hunter</h3>
-            <p className="text-xs sm:text-sm text-sidebar-foreground/70 truncate">AI Chatbot</p>
+            <h3 className="font-serif font-semibold text-sidebar-foreground text-sm sm:text-base truncate">
+              {user?.fullName || user?.firstName || "User"}
+            </h3>
+            <p className="text-xs sm:text-sm text-sidebar-foreground/70 truncate">
+              {user?.emailAddresses?.[0]?.emailAddress || "Ready for bias detection"}
+            </p>
           </div>
         </div>
 
@@ -153,8 +178,8 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
                         {/* Chat Preview */}
                         <div className="space-y-1">
                           <p className="text-sm font-medium text-sidebar-foreground line-clamp-2">
-                            {firstMessage?.content.slice(0, 100) || "New analysis"}
-                            {firstMessage?.content.length > 100 && "..."}
+                            {firstMessage?.content?.slice(0, 100) || "New analysis"}
+                            {firstMessage?.content && firstMessage.content.length > 100 && "..."}
                           </p>
                           <p className="text-xs text-sidebar-foreground/60">
                             {formatDate(chat.createdAt)}

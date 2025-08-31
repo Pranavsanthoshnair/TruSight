@@ -50,6 +50,55 @@ export default function Home() {
     setFilteredNews(filtered)
   }, [news, selectedCategory, searchQuery])
 
+  // Keyboard shortcuts for homepage
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Ctrl/Cmd + B: Go to bias detection
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+        event.preventDefault()
+        router.push('/bias')
+      }
+
+      // Ctrl/Cmd + T: Toggle theme
+      if ((event.ctrlKey || event.metaKey) && event.key === 't') {
+        event.preventDefault()
+        const themeToggle = document.querySelector('[aria-pressed]') as HTMLButtonElement
+        if (themeToggle) {
+          themeToggle.click()
+        }
+      }
+
+      // Ctrl/Cmd + R: Refresh news
+      if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+        event.preventDefault()
+        fetchNews()
+      }
+
+      // Ctrl/Cmd + F: Focus search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault()
+        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
+        if (searchInput) {
+          searchInput.focus()
+        }
+      }
+
+      // Escape: Clear search
+      if (event.key === 'Escape') {
+        setSearchQuery("")
+        setSelectedCategory("")
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [router])
+
   const fetchNews = async () => {
     try {
       setIsLoading(true)

@@ -116,7 +116,7 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
                   >
                     {message.sender === "system" && (
                       <Avatar className="h-7 w-7 sm:h-8 sm:w-8 hover-scale transition-all duration-300 flex-shrink-0">
-                        <AvatarImage src="/robot-avatar.svg" />
+                        <AvatarImage src="/ai.png" />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                           <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
                         </AvatarFallback>
@@ -294,7 +294,7 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
                 className="flex items-end gap-2"
               >
                 <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
-                  <AvatarImage src="/robot-avatar.svg" />
+                  <AvatarImage src="/ai.png" />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                     <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
                   </AvatarFallback>
