@@ -54,7 +54,7 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
   }
 
   return (
-    <div className="flex flex-col h-full bg-sidebar">
+    <div className="flex flex-col h-full bg-sidebar overflow-hidden">
       {/* Profile Section */}
       <motion.div
         className="p-4 sm:p-6 border-b border-sidebar-border flex-shrink-0"
@@ -89,12 +89,12 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
         </Button>
       </motion.div>
 
-      {/* Chat History */}
-      <div className="flex-1 min-h-0">
-        <div className="p-4 sm:p-6">
-          <h4 className="text-sm font-medium text-sidebar-foreground/80 mb-3">Recent Analyses</h4>
+      {/* Chat History - Independent scrollable area */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="p-4 sm:p-6 h-full flex flex-col">
+          <h4 className="text-sm font-medium text-sidebar-foreground/80 mb-3 flex-shrink-0">Recent Analyses</h4>
           
-          <ScrollArea className="h-full">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="space-y-2">
               {chatHistories.length === 0 ? (
                 <motion.div
