@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import { useTheme } from "next-themes"
 import { Navbar } from "@/components/navbar"
 import { SearchBar } from "@/components/search-bar"
 import { NewsCard, NewsArticle } from "@/components/news-card"
@@ -13,9 +14,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, AlertCircle, RefreshCw, Target, ChevronDown, Globe } from "lucide-react"
 import PrismaticBurst from '@/components/PrismaticBurst';
+import Prism from '@/components/Prism';
 
 export default function Home() {
   const router = useRouter()
+  const { theme, resolvedTheme } = useTheme()
+  const currentTheme = resolvedTheme || theme
   const [news, setNews] = useState<NewsArticle[]>([])
   const [filteredNews, setFilteredNews] = useState<NewsArticle[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -124,20 +128,38 @@ export default function Home() {
 
       {/* Full-screen Hero Section */}
       <section className="min-h-screen flex items-center justify-center relative px-4 sm:px-6 lg:px-8">
-        {/* Prismatic Burst Background */}
+        {/* Dynamic Background based on Theme */}
         <div className="absolute inset-0 overflow-hidden">
-          <PrismaticBurst
-            animationType="rotate3d"
-            intensity={1.5}
-            speed={0.3}
-            distort={2.0}
-            paused={false}
-            offset={{ x: 0, y: 0 }}
-            hoverDampness={0.25}
-            rayCount={16}
-            mixBlendMode="lighten"
-            colors={['#ff007a', '#4d3dff', '#00d4ff', '#ffffff']}
-          />
+          {currentTheme === "light" ? (
+            // Light mode: Prism background
+            <Prism
+              height={4.0}
+              baseWidth={6.0}
+              animationType="3drotate"
+              glow={1.2}
+              noise={0.3}
+              scale={4.0}
+              hueShift={0.2}
+              colorFrequency={1.2}
+              timeScale={0.4}
+              bloom={1.4}
+              suspendWhenOffscreen={false}
+            />
+          ) : (
+            // Dark mode: PrismaticBurst background
+            <PrismaticBurst
+              animationType="rotate3d"
+              intensity={1.5}
+              speed={0.3}
+              distort={2.0}
+              paused={false}
+              offset={{ x: 0, y: 0 }}
+              hoverDampness={0.25}
+              rayCount={16}
+              mixBlendMode="lighten"
+              colors={['#ff007a', '#4d3dff', '#00d4ff', '#ffffff']}
+            />
+          )}
         </div>
         
         {/* Hero Content */}
