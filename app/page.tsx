@@ -82,7 +82,7 @@ export default function Home() {
       // Ctrl/Cmd + R: Refresh news
       if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
         event.preventDefault()
-        fetchNews()
+        handleRefresh()
       }
 
       // Ctrl/Cmd + F: Focus search
@@ -147,8 +147,28 @@ export default function Home() {
     router.push(`/bias?article=${articleData}`)
   }
 
-  const handleRefresh = () => {
-    fetchNews()
+  const handleRefresh = async () => {
+    // Clear any existing error
+    setError(null)
+    
+    // Force refresh by clearing current news first
+    setNews([])
+    setFilteredNews([])
+    
+    // Force fresh news from API (bypass cache)
+    try {
+      setIsLoading(true)
+      const freshNews = await newsService.forceRefreshNews(selectedCategory || "general")
+      setNews(freshNews)
+      setFilteredNews(freshNews)
+    } catch (err) {
+      console.error("Failed to force refresh news:", err)
+      setError("Failed to refresh news. Please try again.")
+      // Fallback to regular fetch
+      await fetchNews()
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const getCategoryStats = () => {
@@ -281,7 +301,7 @@ export default function Home() {
                 <Button
                   onClick={() => document.getElementById('news-section')?.scrollIntoView({ behavior: 'smooth' })}
                   size="lg"
-                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground text-base md:text-lg px-10 md:px-12 py-5 md:py-6 h-auto font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0"
+                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground text-base md:text-lg px-10 md:px-12 py-5 md:py-6 h-auto font-semibold shadow-xl hover:shadow-xl transition-all duration-300 border-0"
                 >
                   <Globe className="w-5 h-5 mr-2" />
                   Explore News
@@ -291,7 +311,7 @@ export default function Home() {
                   onClick={() => router.push("/extension")}
                   variant="outline"
                   size="lg"
-                  className="bg-gradient-to-r from-background via-background to-muted/50 hover:from-muted/50 hover:to-muted/80 text-foreground border-2 border-primary/30 hover:border-primary/50 text-base md:text-lg px-10 md:px-12 py-5 md:py-6 h-auto font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl backdrop-blur-sm"
+                  className="bg-white hover:bg-gray-100 text-foreground hover:text-foreground border-2 border-primary/30 hover:border-primary/50 text-base md:text-lg px-10 md:px-12 py-5 md:py-6 h-auto font-semibold transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm"
                 >
                   <Target className="w-5 h-5 mr-2" />
                   Get Your Extension
@@ -345,7 +365,7 @@ export default function Home() {
               onClick={handleRefresh}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 hover:bg-muted/50 transition-colors duration-200"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -353,7 +373,7 @@ export default function Home() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              Refresh
+              {isLoading ? "Refreshing..." : "Refresh"}
             </Button>
           </motion.div>
 

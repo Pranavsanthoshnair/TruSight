@@ -104,11 +104,12 @@ export class NewsService {
   public async fetchTopHeadlines(
     category: string = "general",
     country: string = "us",
-    pageSize: number = 20
+    pageSize: number = 20,
+    forceRefresh: boolean = false
   ): Promise<NewsArticle[]> {
-    // Check if we have cached data and it's recent
+    // Check if we have cached data and it's recent (unless force refresh is requested)
     const now = Date.now()
-    if (this.cachedNews.length > 0 && (now - this.lastFetchTime) < this.cacheDuration) {
+    if (!forceRefresh && this.cachedNews.length > 0 && (now - this.lastFetchTime) < this.cacheDuration) {
       return this.filterNewsByCategory(this.cachedNews, category)
     }
 
@@ -130,6 +131,17 @@ export class NewsService {
     this.cachedNews = MOCK_NEWS
     this.lastFetchTime = now
     return this.filterNewsByCategory(MOCK_NEWS, category)
+  }
+
+  public async forceRefreshNews(
+    category: string = "general",
+    country: string = "us",
+    pageSize: number = 20
+  ): Promise<NewsArticle[]> {
+    // Clear cache and force fresh fetch
+    this.cachedNews = []
+    this.lastFetchTime = 0
+    return this.fetchTopHeadlines(category, country, pageSize, true)
   }
 
   public async searchNews(query: string, pageSize: number = 20): Promise<NewsArticle[]> {
