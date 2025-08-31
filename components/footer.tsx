@@ -10,23 +10,23 @@ export function Footer() {
   const footerLinks = {
     product: [
       { label: "Bias Detection", href: "/bias" },
-      { label: "News API", href: "#" },
-      { label: "Analytics", href: "#" },
+      { label: "News API", href: "/news-api" },
+      { label: "Analytics", href: "/analytics" },
     ],
     company: [
       { label: "About", href: "/about" },
-      { label: "Careers", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "Careers", href: "/careers" },
+      { label: "Contact", href: "/contact" },
     ],
     resources: [
-      { label: "Documentation", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Help Center", href: "#" },
+      { label: "Documentation", href: "/documentation" },
+      { label: "Blog", href: "/blog" },
+      { label: "Help Center", href: "/help-center" },
     ],
     legal: [
-      { label: "Privacy Policy", href: "#" },
-      { label: "Terms of Service", href: "#" },
-      { label: "Cookie Policy", href: "#" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms of Service", href: "/terms-of-service" },
+      { label: "Cookie Policy", href: "/cookie-policy" },
     ],
   }
 
