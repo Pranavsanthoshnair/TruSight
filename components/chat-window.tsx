@@ -72,9 +72,9 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {messages.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
           <motion.div
             className="text-center space-y-4"
             initial={{ opacity: 0, y: 20 }}
@@ -93,7 +93,7 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
           </motion.div>
         </div>
       ) : (
-        <ScrollArea className="flex-1 h-full">
+        <ScrollArea className="flex-1 h-full overflow-hidden">
           <div className="p-4 space-y-4 min-h-full">
             <AnimatePresence>
               {messages.map((message, index) => {

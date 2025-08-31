@@ -449,7 +449,7 @@ function BiasDetectionContent() {
     <div className="flex h-screen bg-background">
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block w-80 border-r border-border bg-sidebar">
+      <div className="hidden md:block w-80 border-r border-border bg-sidebar overflow-hidden">
         <Sidebar
           chatHistories={chatHistories}
           currentChat={currentChat}
@@ -476,7 +476,7 @@ function BiasDetectionContent() {
             exit={{ opacity: 0 }}
           />
           <motion.div
-            className="relative h-full w-80 max-w-[85%] bg-sidebar border-r border-border shadow-2xl"
+            className="relative h-full w-80 max-w-[85%] bg-sidebar border-r border-border shadow-2xl overflow-hidden"
             initial={{ x: -320, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -320, opacity: 0 }}
@@ -623,12 +623,12 @@ function BiasDetectionContent() {
           </motion.div>
         )}
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex min-h-0">
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Chat Messages - Scrollable */}
-            <div className="flex-1 min-h-0">
+        {/* Main Content Area - Fixed height container */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {/* Chat Area - Independent scrollable container */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Chat Messages - Independent scrollable area */}
+            <div className="flex-1 min-h-0 overflow-hidden">
               <ChatWindow messages={currentChat?.messages || []} isLoading={isLoading} />
             </div>
             
