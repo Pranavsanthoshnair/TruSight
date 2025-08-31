@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Trash2, Plus, Bot, User } from "lucide-react"
-import type { ChatHistory } from "@/lib/types"
+import { Trash2, Plus, Bot, User, Share2 } from "lucide-react"
+import type { ChatHistory, ChatMessage } from "@/lib/types"
 import { useUser } from "@clerk/nextjs"
+import { ShareAnalysis } from "./share-analysis"
+import { useState } from "react"
 
 interface SidebarProps {
   chatHistories: ChatHistory[]
@@ -19,6 +21,8 @@ interface SidebarProps {
 
 export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysis, onDeleteChat }: SidebarProps) {
   const { user, isLoaded } = useUser()
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [selectedAnalysisMessage, setSelectedAnalysisMessage] = useState<ChatMessage | null>(null)
   
   const formatDate = (date: Date) => {
     const now = new Date()
@@ -186,18 +190,34 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
                           </p>
                         </div>
 
-                        {/* Delete Button */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-sidebar-foreground/10"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onDeleteChat(chat.id)
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        {/* Action Buttons */}
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          {analysisMessage && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-sidebar-foreground/10"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedAnalysisMessage(analysisMessage)
+                                setShareModalOpen(true)
+                              }}
+                            >
+                              <Share2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 hover:bg-sidebar-foreground/10"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onDeleteChat(chat.id)
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   )
@@ -207,6 +227,17 @@ export function Sidebar({ chatHistories, currentChat, onSelectChat, onNewAnalysi
           </ScrollArea>
         </div>
       </div>
+
+      {/* Share Analysis Modal */}
+      <ShareAnalysis
+        analysisMessage={selectedAnalysisMessage}
+        chatId={currentChat?.id}
+        isOpen={shareModalOpen}
+        onClose={() => {
+          setShareModalOpen(false)
+          setSelectedAnalysisMessage(null)
+        }}
+      />
     </div>
   )
 }

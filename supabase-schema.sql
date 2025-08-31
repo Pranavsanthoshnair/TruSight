@@ -21,6 +21,16 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create shared_analyses table for sharing analysis results
+CREATE TABLE IF NOT EXISTS shared_analyses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  share_id TEXT UNIQUE NOT NULL,
+  chat_id UUID NOT NULL REFERENCES chat_histories(id) ON DELETE CASCADE,
+  message_id UUID NOT NULL REFERENCES chat_messages(id) ON DELETE CASCADE,
+  analysis_data JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create function for setting session context
 CREATE OR REPLACE FUNCTION set_config(setting_name text, setting_value text, is_local boolean)
 RETURNS text AS $$
@@ -38,9 +48,15 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_chat_history_id ON chat_messages(ch
 CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages(timestamp);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_analysis_data ON chat_messages USING GIN (analysis_data);
 
+-- Create indexes for shared_analyses
+CREATE INDEX IF NOT EXISTS idx_shared_analyses_share_id ON shared_analyses(share_id);
+CREATE INDEX IF NOT EXISTS idx_shared_analyses_chat_id ON shared_analyses(chat_id);
+CREATE INDEX IF NOT EXISTS idx_shared_analyses_created_at ON shared_analyses(created_at DESC);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE chat_histories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shared_analyses ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for chat_histories (support both authenticated and anonymous users)
 CREATE POLICY "Users can view their own chat histories" ON chat_histories
@@ -116,6 +132,36 @@ CREATE POLICY "Users can delete messages from their chat histories" ON chat_mess
     EXISTS (
       SELECT 1 FROM chat_histories 
       WHERE chat_histories.id = chat_messages.chat_history_id 
+      AND (
+        chat_histories.user_id = auth.uid()::text OR 
+        chat_histories.user_id IS NULL OR
+        (chat_histories.session_id IS NOT NULL AND chat_histories.session_id = current_setting('app.session_id', true))
+      )
+    )
+  );
+
+-- Create policies for shared_analyses (public read access, authenticated write access)
+CREATE POLICY "Anyone can view shared analyses" ON shared_analyses
+  FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can create shared analyses" ON shared_analyses
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM chat_histories 
+      WHERE chat_histories.id = shared_analyses.chat_id 
+      AND (
+        chat_histories.user_id = auth.uid()::text OR 
+        chat_histories.user_id IS NULL OR
+        (chat_histories.session_id IS NOT NULL AND chat_histories.session_id = current_setting('app.session_id', true))
+      )
+    )
+  );
+
+CREATE POLICY "Users can delete their own shared analyses" ON shared_analyses
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM chat_histories 
+      WHERE chat_histories.id = shared_analyses.chat_id 
       AND (
         chat_histories.user_id = auth.uid()::text OR 
         chat_histories.user_id IS NULL OR

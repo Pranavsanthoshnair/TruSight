@@ -629,7 +629,11 @@ function BiasDetectionContent() {
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Chat Messages - Independent scrollable area */}
             <div className="flex-1 min-h-0 overflow-hidden">
-              <ChatWindow messages={currentChat?.messages || []} isLoading={isLoading} />
+              <ChatWindow 
+                messages={currentChat?.messages || []} 
+                isLoading={isLoading} 
+                chatId={currentChat?.id}
+              />
             </div>
             
             {/* Input Area - Fixed at bottom */}
