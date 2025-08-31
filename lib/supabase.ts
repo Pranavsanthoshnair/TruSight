@@ -15,6 +15,7 @@ export type Database = {
           created_at: string
           updated_at: string
           user_id?: string
+          session_id?: string
         }
         Insert: {
           id?: string
@@ -22,6 +23,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           user_id?: string
+          session_id?: string
         }
         Update: {
           id?: string
@@ -29,6 +31,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           user_id?: string
+          session_id?: string
         }
       }
       chat_messages: {
@@ -39,6 +42,7 @@ export type Database = {
           sender: 'user' | 'system'
           timestamp: string
           type?: 'analysis' | 'message'
+          analysis_data?: any
           created_at: string
         }
         Insert: {
@@ -48,6 +52,7 @@ export type Database = {
           sender: 'user' | 'system'
           timestamp?: string
           type?: 'analysis' | 'message'
+          analysis_data?: any
           created_at?: string
         }
         Update: {
@@ -57,9 +62,35 @@ export type Database = {
           sender?: 'user' | 'system'
           timestamp?: string
           type?: 'analysis' | 'message'
+          analysis_data?: any
           created_at?: string
         }
       }
     }
+  }
+}
+
+// Session management for anonymous users
+export const getSessionId = (): string => {
+  if (typeof window === 'undefined') return ''
+  
+  let sessionId = localStorage.getItem('trusight_session_id')
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    localStorage.setItem('trusight_session_id', sessionId)
+  }
+  return sessionId
+}
+
+// Set session context for RLS policies
+export const setSessionContext = async (sessionId: string) => {
+  try {
+    await supabase.rpc('set_config', {
+      setting_name: 'app.session_id',
+      setting_value: sessionId,
+      is_local: true
+    })
+  } catch (error) {
+    console.warn('Failed to set session context:', error)
   }
 }

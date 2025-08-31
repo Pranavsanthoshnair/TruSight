@@ -4,6 +4,7 @@ export interface ChatMessage {
   sender: "user" | "system"
   timestamp: Date
   type?: "analysis" | "message"
+  analysisData?: any
 }
 
 export interface ChatHistory {
