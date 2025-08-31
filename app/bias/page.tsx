@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { useUser } from "@clerk/nextjs"
 import { motion } from "framer-motion"
 import { Sidebar } from "@/components/sidebar"
 import { ChatWindow } from "@/components/chat-window"
@@ -17,6 +18,7 @@ import { useRouter } from "next/navigation"
 function BiasDetectionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, isLoaded } = useUser()
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([])
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -36,15 +38,32 @@ function BiasDetectionContent() {
     return null
   }, [articleParam])
 
-  // Load chat histories from Supabase
+  // Load chat histories from Supabase when user is loaded
   useEffect(() => {
-    loadChatHistories()
-  }, [])
+    if (isLoaded) {
+      loadChatHistories()
+    }
+  }, [isLoaded, user?.id])
 
   const loadChatHistories = async () => {
     try {
       setIsLoadingChats(true)
-      const histories = await ChatService.getChatHistories()
+      // Pass Clerk user ID if user is authenticated
+      const userId = user?.id
+      
+      // Debug logging
+      console.log('🔍 loadChatHistories - Clerk user info:', {
+        isSignedIn: !!user,
+        userId: userId,
+        userIdType: typeof userId,
+        userObject: user ? {
+          id: user.id,
+          emailAddresses: user.emailAddresses?.map(e => e.emailAddress),
+          username: user.username
+        } : null
+      })
+      
+      const histories = await ChatService.getChatHistories(userId)
       setChatHistories(histories)
       
       // If there's a current chat ID in localStorage, try to find and set it
@@ -80,11 +99,11 @@ function BiasDetectionContent() {
 
   // Auto-analyze article if provided from news page
   useEffect(() => {
-    if (articleData && !currentChat && !isLoadingChats) {
+    if (articleData && !currentChat && !isLoadingChats && isLoaded) {
       const articleText = `${articleData.title}\n\n${articleData.content}\n\nSource: ${articleData.source}\nURL: ${articleData.url}`
       handleAutoAnalysis(articleText)
     }
-  }, [articleData, currentChat, isLoadingChats])
+  }, [articleData, currentChat, isLoadingChats, isLoaded])
 
   // Clean up old localStorage data
   useEffect(() => {
@@ -135,7 +154,13 @@ function BiasDetectionContent() {
 
   const handleAutoAnalysis = async (content: string) => {
     try {
-      const newChat = await ChatService.createChatHistory("Article Analysis")
+      // Pass Clerk user ID if authenticated
+      const userId = user?.id
+      
+      // Debug logging
+      console.log('🔍 handleAutoAnalysis - Creating chat with userId:', userId)
+      
+      const newChat = await ChatService.createChatHistory("Article Analysis", userId)
       setChatHistories((prev) => [newChat, ...prev])
       setCurrentChat(newChat)
       
@@ -150,7 +175,13 @@ function BiasDetectionContent() {
 
   const startNewAnalysis = async () => {
     try {
-      const newChat = await ChatService.createChatHistory("New Analysis")
+      // Pass Clerk user ID if authenticated
+      const userId = user?.id
+      
+      // Debug logging
+      console.log('🔍 startNewAnalysis - Creating chat with userId:', userId)
+      
+      const newChat = await ChatService.createChatHistory("New Analysis", userId)
       setChatHistories((prev) => [newChat, ...prev])
       setCurrentChat(newChat)
     } catch (error) {
@@ -160,6 +191,7 @@ function BiasDetectionContent() {
 
   const handleDeleteChat = async (chatId: string) => {
     try {
+      console.log('🔍 handleDeleteChat - Deleting chat:', chatId)
       await ChatService.deleteChatHistory(chatId)
       setChatHistories((prev) => prev.filter(chat => chat.id !== chatId))
       
@@ -167,6 +199,7 @@ function BiasDetectionContent() {
       if (currentChat?.id === chatId) {
         setCurrentChat(null)
       }
+      console.log('✅ Chat deleted successfully')
     } catch (error) {
       console.error('Failed to delete chat:', error)
     }
@@ -182,7 +215,13 @@ function BiasDetectionContent() {
     let activeChat = currentChat
     if (!activeChat) {
       try {
-        activeChat = await ChatService.createChatHistory("New Analysis")
+        // Pass Clerk user ID if authenticated
+        const userId = user?.id
+        
+        // Debug logging
+        console.log('🔍 sendMessage - Creating new chat with userId:', userId)
+        
+        activeChat = await ChatService.createChatHistory("New Analysis", userId)
         setChatHistories((prev) => [activeChat!, ...prev])
         setCurrentChat(activeChat)
       } catch (error) {
@@ -310,12 +349,15 @@ function BiasDetectionContent() {
     return lines.join("\n")
   }
 
-  if (isLoadingChats) {
+  // Show loading while Clerk is initializing
+  if (!isLoaded || isLoadingChats) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading chat histories...</p>
+          <p className="text-muted-foreground">
+            {!isLoaded ? "Loading authentication..." : "Loading chat histories..."}
+          </p>
         </div>
       </div>
     )

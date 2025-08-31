@@ -10,35 +10,95 @@ export class ChatService {
 
   // Create a new chat history
   static async createChatHistory(title: string, userId?: string): Promise<ChatHistory> {
-    await this.initializeSession()
-    
-    const sessionId = getSessionId()
-    const { data, error } = await supabase
-      .from('chat_histories')
-      .insert({
-        title,
-        user_id: userId,
-        session_id: userId ? null : sessionId,
+    try {
+      await this.initializeSession()
+      
+      const sessionId = getSessionId()
+      
+      // Debug logging
+      console.log('🔍 ChatService.createChatHistory:', { 
+        title, 
+        userId, 
+        sessionId,
+        hasUserId: !!userId,
+        userIdType: typeof userId 
       })
-      .select()
-      .single()
+      
+      // Test Supabase connection first
+      const { data: testData, error: testError } = await supabase
+        .from('chat_histories')
+        .select('count')
+        .limit(1)
+      
+      if (testError) {
+        console.error('❌ Supabase connection test failed:', testError)
+        throw new Error(`Supabase connection failed: ${testError.message}`)
+      }
+      
+      console.log('✅ Supabase connection test passed')
+      
+      const insertData = {
+        title,
+        user_id: userId || null,
+        session_id: userId ? null : sessionId,
+      }
+      
+      console.log('🔍 Inserting data:', insertData)
+      
+      const { data, error } = await supabase
+        .from('chat_histories')
+        .insert(insertData)
+        .select()
+        .single()
 
-    if (error) {
-      console.error('Error creating chat history:', error)
-      throw new Error(`Failed to create chat history: ${error.message}`)
-    }
+      if (error) {
+        console.error('❌ Error creating chat history:', {
+          error,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint,
+          errorCode: error.code,
+          insertData
+        })
+        
+        // Check if it's an RLS policy issue
+        if (error.code === 'PGRST116' || error.message?.includes('policy')) {
+          throw new Error(`Permission denied: RLS policy blocking insert. Check your Supabase RLS policies.`)
+        }
+        
+        throw new Error(`Failed to create chat history: ${error.message || 'Unknown error'}`)
+      }
 
-    return {
-      id: data.id,
-      title: data.title,
-      messages: [],
-      createdAt: new Date(data.created_at),
+      // Debug logging for created record
+      console.log('✅ Created chat history:', {
+        id: data.id,
+        user_id: data.user_id,
+        session_id: data.session_id,
+        title: data.title
+      })
+
+      return {
+        id: data.id,
+        title: data.title,
+        messages: [],
+        createdAt: new Date(data.created_at),
+      }
+    } catch (err) {
+      console.error('❌ ChatService.createChatHistory failed:', err)
+      throw err
     }
   }
 
   // Get all chat histories for a user or session
   static async getChatHistories(userId?: string): Promise<ChatHistory[]> {
     await this.initializeSession()
+    
+    // Debug logging
+    console.log('🔍 ChatService.getChatHistories:', { 
+      userId, 
+      hasUserId: !!userId,
+      userIdType: typeof userId 
+    })
     
     const query = supabase
       .from('chat_histories')
@@ -51,9 +111,11 @@ export class ChatService {
     // If userId is provided, filter by user_id, otherwise use session_id
     if (userId) {
       query.eq('user_id', userId)
+      console.log('🔍 Filtering by user_id:', userId)
     } else {
       const sessionId = getSessionId()
       query.eq('session_id', sessionId)
+      console.log('🔍 Filtering by session_id:', sessionId)
     }
 
     const { data, error } = await query
@@ -62,6 +124,14 @@ export class ChatService {
       console.error('Error fetching chat histories:', error)
       throw new Error(`Failed to fetch chat histories: ${error.message}`)
     }
+
+    // Debug logging for fetched records
+    console.log('✅ Fetched chat histories:', data.map(chat => ({
+      id: chat.id,
+      user_id: chat.user_id,
+      session_id: chat.session_id,
+      title: chat.title
+    })))
 
     return data.map(chat => ({
       id: chat.id,
