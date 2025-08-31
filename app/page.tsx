@@ -127,7 +127,7 @@ export default function Home() {
       <Navbar />
 
       {/* Full-screen Hero Section */}
-      <section className="min-h-screen flex items-center justify-center relative px-4 sm:px-6 lg:px-8">
+      <section className="min-h-screen flex items-center justify-center relative px-4 sm:px-6 lg:px-8 -mt-20 pt-20">
         {/* Dynamic Background based on Theme */}
         <div className="absolute inset-0 overflow-hidden">
           {currentTheme === "light" ? (

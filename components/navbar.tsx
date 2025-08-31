@@ -4,10 +4,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Menu, X, Search, Globe, User } from "lucide-react"
+import { Menu, X, Globe, User, Target, HelpCircle } from "lucide-react"
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs"
 
 export function Navbar() {
@@ -16,16 +16,16 @@ export function Navbar() {
   const { isSignedIn } = useUser()
 
   const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/bias", label: "Bias Detection" },
-    { href: "/about", label: "About" },
+    { href: "/", label: "Home", icon: Globe },
+    { href: "/bias", label: "Bias Detection", icon: Target },
+    { href: "/about", label: "About", icon: HelpCircle },
   ]
 
   const authenticatedNavItems = [
-    { href: "/", label: "Home" },
-    { href: "/bias", label: "Bias Detection" },
-    { href: "/profile", label: "Profile" },
-    { href: "/about", label: "About" },
+    { href: "/", label: "Home", icon: Globe },
+    { href: "/bias", label: "Bias Detection", icon: Target },
+    { href: "/profile", label: "Profile", icon: User },
+    { href: "/about", label: "About", icon: HelpCircle },
   ]
 
   const currentNavItems = isSignedIn ? authenticatedNavItems : navItems
@@ -33,74 +33,110 @@ export function Navbar() {
   const isActive = (href: string) => pathname === href
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
-            <motion.div
-              className="flex items-center space-x-2"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <Globe className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-serif font-bold text-foreground">
-                TruSight
-              </span>
-            </motion.div>
-          </Link>
+    <div className="sticky top-0 z-50 w-full px-4 sm:px-6 lg:px-8 pt-4">
+      <nav className="mx-auto max-w-7xl bg-background/30 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-full shadow-2xl shadow-black/10">
+        <div className="flex h-16 items-center justify-between px-6 relative">
+          {/* Logo - Left Side */}
+          <motion.div 
+            className="flex-shrink-0 z-10"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Link href="/" className="flex items-center space-x-3 group">
+              <motion.div 
+                className="flex items-center space-x-3"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <Globe className="h-8 w-8 text-primary transition-colors duration-200" />
+                <span className="text-xl font-semibold text-foreground">
+                  TruSight
+                </span>
+              </motion.div>
+            </Link>
+          </motion.div>
 
-          {/* Desktop Navigation - Centered */}
-          <div className="hidden md:flex md:items-center md:space-x-8 flex-1 justify-center">
-            {currentNavItems.map((item) => (
-              <Link key={item.href} href={item.href}>
+          {/* Desktop Navigation - Absolutely Centered */}
+          <div className="hidden lg:flex lg:items-center lg:space-x-2 absolute left-1/2 transform -translate-x-1/2">
+            {currentNavItems.map((item, index) => {
+              const IconComponent = item.icon
+              return (
                 <motion.div
-                  className={`relative px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
-                    isActive(item.href) ? "text-primary" : "text-muted-foreground"
-                  }`}
-                  whileHover={{ y: -2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  key={item.href}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  {item.label}
-                  {isActive(item.href) && (
-                    <motion.div
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                      layoutId="navbar-indicator"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
+                  <Link href={item.href}>
+                    <Button
+                      variant={isActive(item.href) ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-9 px-4 transition-all duration-200 flex items-center space-x-2 backdrop-blur-sm ${
+                        isActive(item.href) 
+                          ? "bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
+                      }`}
+                    >
+                      <IconComponent className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Button>
+                  </Link>
                 </motion.div>
-              </Link>
-            ))}
+              )
+            })}
           </div>
 
-          {/* Right side - Search, Theme Toggle, and Auth */}
-          <div className="flex items-center space-x-4 flex-shrink-0">
-
+          {/* Right side - Theme Toggle and Auth */}
+          <motion.div 
+            className="flex items-center space-x-4 flex-shrink-0 z-10"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             {/* Theme Toggle */}
-            <ThemeToggle />
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <ThemeToggle />
+            </motion.div>
 
             {/* Authentication */}
             <div className="flex items-center space-x-2">
               {isSignedIn ? (
-                <UserButton 
-                  appearance={{
-                    elements: {
-                      avatarBox: "h-8 w-8",
-                      userButtonPopoverCard: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700",
-                      userButtonPopoverActionButton: "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700",
-                    }
-                  }}
-                />
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <UserButton 
+                    appearance={{
+                      elements: {
+                        avatarBox: "h-8 w-8 ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-200",
+                        userButtonPopoverCard: "bg-background/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl shadow-black/20 rounded-xl",
+                        userButtonPopoverActionButton: "text-foreground hover:bg-white/10 dark:hover:bg-white/5 transition-colors",
+                      }
+                    }}
+                  />
+                </motion.div>
               ) : (
                 <>
                   <SignInButton mode="modal">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5 transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                    >
                       Sign In
                     </Button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <Button size="sm">
+                    <Button 
+                      size="sm"
+                      className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                    >
                       Sign Up
                     </Button>
                   </SignUpButton>
@@ -109,69 +145,117 @@ export function Navbar() {
             </div>
 
             {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle mobile menu"
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden h-9 w-9 rounded-full hover:bg-white/10 dark:hover:bg-white/5 backdrop-blur-sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle mobile menu"
+              >
+                <AnimatePresence mode="wait">
+                  {isMobileMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="h-5 w-5" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="h-5 w-5" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <motion.div
-            className="md:hidden"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="space-y-1 pb-3 pt-2">
-              {currentNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <div
-                    className={`block px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                      isActive(item.href)
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground"
-                    }`}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              className="lg:hidden border-t border-white/20 dark:border-white/10 mx-6 rounded-b-full overflow-hidden backdrop-blur-2xl bg-background/20"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <div className="space-y-2 py-4">
+                {currentNavItems.map((item, index) => {
+                  const IconComponent = item.icon
+                  return (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.1 }}
+                      className="mx-2"
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Button
+                          variant={isActive(item.href) ? "default" : "ghost"}
+                          className={`w-full justify-start h-12 text-base font-medium transition-all duration-200 flex items-center space-x-3 backdrop-blur-sm ${
+                            isActive(item.href)
+                              ? "bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
+                              : "text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
+                          }`}
+                        >
+                          <IconComponent className="h-5 w-5" />
+                          <span>{item.label}</span>
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  )
+                })}
+                
+                {/* Mobile Auth Buttons */}
+                {!isSignedIn && (
+                  <motion.div 
+                    className="flex flex-col space-y-2 pt-4 border-t border-white/20 dark:border-white/10 mx-2"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
                   >
-                    {item.label}
-                  </div>
-                </Link>
-              ))}
-              
-              {/* Mobile Auth Buttons */}
-              {!isSignedIn && (
-                <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-                  <SignInButton mode="modal">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Sign In
-                    </Button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <Button className="w-full justify-start">
-                      Sign Up
-                    </Button>
-                  </SignUpButton>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </div>
-    </nav>
+                    <SignInButton mode="modal">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5 h-12 backdrop-blur-sm hover:scale-105 active:scale-95"
+                      >
+                        Sign In
+                      </Button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <Button 
+                        className="w-full justify-start bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg shadow-primary/25 h-12 backdrop-blur-sm hover:scale-105 active:scale-95"
+                      >
+                        Sign Up
+                      </Button>
+                    </SignUpButton>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+    </div>
   )
 }
