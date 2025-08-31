@@ -31,8 +31,10 @@ TruSight is a comprehensive news analysis platform that combines real-time news 
 ### 🔊 **Voice Response System**
 - **Text-to-Speech**: Convert bias analysis to natural speech
 - **ElevenLabs Integration**: High-quality AI voice synthesis
+- **Browser Fallback**: Automatic fallback to built-in TTS if API fails
 - **Optional Usage**: Only activates when user requests it
 - **Multiple Voices**: Professional voice options available
+- **Provider Indication**: Shows which TTS service is currently active
 
 ### 🌐 **Browser Extension**
 - **Extension Showcase**: Dedicated page for browser extension

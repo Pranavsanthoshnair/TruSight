@@ -36,7 +36,12 @@ npm run dev
 ### Voice Button Location
 - The voice button appears as a speaker icon (🔊) in the top-right corner of bias analysis cards
 - It only appears for system messages that contain bias analysis results
-- The button is automatically hidden if no ElevenLabs API key is provided
+- **Always Available**: The button is now always visible thanks to browser TTS fallback
+
+### Fallback System
+- **Primary**: ElevenLabs AI voices (high quality, natural)
+- **Fallback**: Browser's built-in text-to-speech (always available)
+- **Automatic**: Seamlessly switches between providers based on availability
 
 ### Voice Button States
 - **🔊 Default**: Click to play voice narration
@@ -48,6 +53,12 @@ npm run dev
 The system automatically generates a natural language summary of the bias analysis:
 
 > "Bias analysis complete. The detected bias is left-leaning with 85% confidence. The publisher is CNN. Missing perspectives include: conservative viewpoints, right-leaning sources. Analysis: The article shows clear bias through selective use of sources and emotional language."
+
+### Provider Indicators
+- **🔊 (Volume2)**: ElevenLabs AI voice (high quality)
+- **🔊 (Volume1)**: Browser TTS (built-in fallback)
+- **E Badge**: Blue indicator showing ElevenLabs is active
+- **B Badge**: Green indicator showing Browser TTS is active
 
 ## Customization
 
@@ -71,12 +82,26 @@ Change the default voice by modifying the `voiceId` parameter in the `textToSpee
 ### Speech Text Generation
 Modify the `generateSpeechText` method to change how the analysis is narrated.
 
+## Browser TTS Fallback
+
+### How It Works
+- **Automatic Fallback**: If ElevenLabs fails or is unavailable, browser TTS activates automatically
+- **No Setup Required**: Works in all modern browsers without additional configuration
+- **Voice Selection**: Automatically selects the best available voice for your language
+- **Performance**: Instant response with no API calls or network delays
+
+### Browser Compatibility
+- **Chrome/Edge**: Full support with multiple voice options
+- **Firefox**: Good support with voice selection
+- **Safari**: Basic support with system voices
+- **Mobile**: Works on iOS Safari and Android Chrome
+
 ## Troubleshooting
 
 ### Voice Button Not Appearing
-1. Check that `NEXT_PUBLIC_ELEVENLABS_API_KEY` is set in `.env.local`
-2. Restart your development server
-3. Check browser console for any error messages
+1. The voice button is now always visible thanks to browser TTS fallback
+2. If you still don't see it, check browser console for errors
+3. Ensure you're viewing a bias analysis result
 
 ### Audio Not Playing
 1. Ensure browser volume is enabled

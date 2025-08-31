@@ -1,15 +1,41 @@
 "use client"
 
 import { useUser } from "@clerk/nextjs"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { User, Mail, Calendar, Shield, Target, Award } from "lucide-react"
+import { User, Mail, Calendar, Shield, Target, Award, MessageSquare, TrendingUp } from "lucide-react"
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
+import { ChatService } from "@/lib/chat-service"
+import type { ChatHistory, ChatMessage } from "@/lib/types"
 
 function ProfileContent() {
   const { user } = useUser()
+  const [chatHistories, setChatHistories] = useState<ChatHistory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadChatHistories = async () => {
+      if (!user) return
+      
+      try {
+        setIsLoading(true)
+        setError(null)
+        const histories = await ChatService.getChatHistories(user.id)
+        setChatHistories(histories)
+      } catch (err) {
+        console.error('Failed to load chat histories:', err)
+        setError('Failed to load chat histories')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadChatHistories()
+  }, [user])
 
   if (!user) {
     return (
@@ -20,6 +46,36 @@ function ProfileContent() {
         </div>
       </div>
     )
+  }
+
+  // Calculate statistics
+  const getAnalysisCount = () => {
+    return chatHistories.reduce((total, chat) => {
+      return total + chat.messages.filter(msg => msg.type === 'analysis').length
+    }, 0)
+  }
+
+  const getRecentActivity = () => {
+    const allMessages: Array<{ chat: ChatHistory; message: ChatMessage }> = []
+    
+    chatHistories.forEach(chat => {
+      chat.messages.forEach(message => {
+        allMessages.push({ chat, message })
+      })
+    })
+    
+    // Sort by timestamp (most recent first) and take the last 5
+    return allMessages
+      .sort((a, b) => b.message.timestamp.getTime() - a.message.timestamp.getTime())
+      .slice(0, 5)
+  }
+
+  const getBiasDetectionLevel = () => {
+    const analysisCount = getAnalysisCount()
+    if (analysisCount >= 50) return 'Expert'
+    if (analysisCount >= 25) return 'Advanced'
+    if (analysisCount >= 10) return 'Intermediate'
+    return 'Beginner'
   }
 
   return (
@@ -100,17 +156,16 @@ function ProfileContent() {
                 </CardTitle>
                 <CardDescription>
                   Your TruSight activity and achievements
+                  {isLoading && <span className="text-xs text-muted-foreground"> (Loading...)</span>}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="text-center p-4 bg-secondary rounded-lg">
-                    <div className="text-2xl font-bold text-primary">0</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {isLoading ? '...' : getAnalysisCount()}
+                    </div>
                     <div className="text-sm text-muted-foreground">Analyses</div>
-                  </div>
-                  <div className="text-center p-4 bg-secondary rounded-lg">
-                    <div className="text-2xl font-bold text-primary">0</div>
-                    <div className="text-sm text-muted-foreground">Truth Points</div>
                   </div>
                 </div>
                 
@@ -126,7 +181,7 @@ function ProfileContent() {
                     <span className="text-sm text-muted-foreground">Bias Detection Level</span>
                     <Badge variant="outline" className="flex items-center gap-1">
                       <Target className="h-3 w-3" />
-                      Beginner
+                      {getBiasDetectionLevel()}
                     </Badge>
                   </div>
                 </div>
@@ -142,11 +197,70 @@ function ProfileContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No analyses yet</p>
-                  <p className="text-sm">Start your first bias detection analysis to see your activity here</p>
-                </div>
+                {isLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p>Loading activity...</p>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-destructive">Failed to load activity</p>
+                    <p className="text-sm">{error}</p>
+                  </div>
+                ) : getRecentActivity().length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No analyses yet</p>
+                    <p className="text-sm">Start your first bias detection analysis to see your activity here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {getRecentActivity().map(({ chat, message }, index) => (
+                      <motion.div
+                        key={`${chat.id}-${message.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg"
+                      >
+                        <div className="flex-shrink-0">
+                          {message.sender === 'user' ? (
+                            <MessageSquare className="h-4 w-4 text-primary" />
+                          ) : (
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-muted-foreground">
+                              {message.timestamp.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                            {message.type === 'analysis' && (
+                              <Badge variant="outline" size="sm" className="text-xs">
+                                Analysis
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-foreground line-clamp-2">
+                            {message.sender === 'user' 
+                              ? `Asked: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`
+                              : message.content.substring(0, 100) + (message.content.length > 100 ? '...' : '')
+                            }
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            From: {chat.title}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
