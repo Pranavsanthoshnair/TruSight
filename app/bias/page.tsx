@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { useUser } from "@clerk/nextjs"
 import { motion } from "framer-motion"
 import { Sidebar } from "@/components/sidebar"
 import { ChatWindow } from "@/components/chat-window"
 import { InputBox } from "@/components/input-box"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { ChatService } from "@/lib/chat-service"
 
 import type { ChatHistory, ChatMessage } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -16,11 +18,13 @@ import { useRouter } from "next/navigation"
 function BiasDetectionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, isLoaded } = useUser()
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([])
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [isLoadingChats, setIsLoadingChats] = useState(true)
 
   // Check for article data from news page
   const articleParam = searchParams.get('article')
@@ -35,48 +39,77 @@ function BiasDetectionContent() {
     return null
   }, [articleParam])
 
-  // Load persisted chats
+  // Load chat histories from Supabase when user is loaded
   useEffect(() => {
+    if (isLoaded) {
+      loadChatHistories()
+    }
+  }, [isLoaded, user?.id])
+
+  const loadChatHistories = async () => {
     try {
-      const saved = localStorage.getItem("ts_chats")
-      const savedCurrent = localStorage.getItem("ts_current")
+      setIsLoadingChats(true)
+      // Pass Clerk user ID if user is authenticated
+      const userId = user?.id
       
-      if (saved) {
-        const parsed = JSON.parse(saved) as any[]
-        const restored = parsed.map((c) => ({
-          ...c,
-          createdAt: new Date(c.createdAt),
-          messages: c.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
-        }))
-        setChatHistories(restored)
-        if (savedCurrent) {
-          const found = restored.find((c) => c.id === savedCurrent)
-          if (found) setCurrentChat(found)
+      // Debug logging
+      console.log('🔍 loadChatHistories - Clerk user info:', {
+        isSignedIn: !!user,
+        userId: userId,
+        userIdType: typeof userId,
+        userObject: user ? {
+          id: user.id,
+          emailAddresses: user.emailAddresses?.map(e => e.emailAddress),
+          username: user.username
+        } : null
+      })
+      
+      const histories = await ChatService.getChatHistories(userId)
+      setChatHistories(histories)
+      
+      // If there's a current chat ID in localStorage, try to find and set it
+      const savedCurrentId = localStorage.getItem("ts_current")
+      if (savedCurrentId) {
+        const found = histories.find(h => h.id === savedCurrentId)
+        if (found) {
+          setCurrentChat(found)
         }
+        localStorage.removeItem("ts_current") // Clean up old localStorage
       }
-    } catch {}
-  }, [])
+    } catch (error) {
+      console.error('Failed to load chat histories:', error)
+      // Fallback to localStorage if Supabase fails
+      try {
+        const saved = localStorage.getItem("ts_chats")
+        if (saved) {
+          const parsed = JSON.parse(saved) as any[]
+          const restored = parsed.map((c) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            messages: c.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
+          }))
+          setChatHistories(restored)
+        }
+      } catch (fallbackError) {
+        console.error('Failed to load from localStorage fallback:', fallbackError)
+      }
+    } finally {
+      setIsLoadingChats(false)
+    }
+  }
 
   // Auto-analyze article if provided from news page
   useEffect(() => {
-    if (articleData && !currentChat) {
+    if (articleData && !currentChat && !isLoadingChats && isLoaded) {
       const articleText = `${articleData.title}\n\n${articleData.content}\n\nSource: ${articleData.source}\nURL: ${articleData.url}`
       handleAutoAnalysis(articleText)
     }
-  }, [articleData, currentChat])
+  }, [articleData, currentChat, isLoadingChats, isLoaded])
 
-  // Persist on change
+  // Clean up old localStorage data
   useEffect(() => {
-    try {
-      const serializable = chatHistories.map((c) => ({
-        ...c,
-        createdAt: c.createdAt.toISOString(),
-        messages: c.messages.map((m) => ({ ...m, timestamp: m.timestamp.toISOString() })),
-      }))
-      localStorage.setItem("ts_chats", JSON.stringify(serializable))
-      localStorage.setItem("ts_current", currentChat?.id || "")
-    } catch {}
-  }, [chatHistories, currentChat])
+    localStorage.removeItem("ts_chats")
+  }, [])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -201,39 +234,56 @@ function BiasDetectionContent() {
     })
   }, [])
 
-  const handleAutoAnalysis = (content: string) => {
-    const newChat: ChatHistory = {
-      id: `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title: "Article Analysis",
-      messages: [],
-      createdAt: new Date(),
+  const handleAutoAnalysis = async (content: string) => {
+    try {
+      // Pass Clerk user ID if authenticated
+      const userId = user?.id
+      
+      // Debug logging
+      console.log('🔍 handleAutoAnalysis - Creating chat with userId:', userId)
+      
+      const newChat = await ChatService.createChatHistory("Article Analysis", userId)
+      setChatHistories((prev) => [newChat, ...prev])
+      setCurrentChat(newChat)
+      
+      // Auto-send the article content
+      setTimeout(() => {
+        sendMessage(content)
+      }, 500)
+    } catch (error) {
+      console.error('Failed to create auto-analysis chat:', error)
     }
-    setChatHistories((prev) => [newChat, ...prev])
-    setCurrentChat(newChat)
-    
-    // Auto-send the article content
-    setTimeout(() => {
-      sendMessage(content)
-    }, 500)
   }
 
-  const startNewAnalysis = () => {
-    const newChat: ChatHistory = {
-      id: `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title: "New Analysis",
-      messages: [],
-      createdAt: new Date(),
+  const startNewAnalysis = async () => {
+    try {
+      // Pass Clerk user ID if authenticated
+      const userId = user?.id
+      
+      // Debug logging
+      console.log('🔍 startNewAnalysis - Creating chat with userId:', userId)
+      
+      const newChat = await ChatService.createChatHistory("New Analysis", userId)
+      setChatHistories((prev) => [newChat, ...prev])
+      setCurrentChat(newChat)
+    } catch (error) {
+      console.error('Failed to create new analysis:', error)
     }
-    setChatHistories((prev) => [newChat, ...prev])
-    setCurrentChat(newChat)
   }
 
-  const handleDeleteChat = (chatId: string) => {
-    setChatHistories((prev) => prev.filter(chat => chat.id !== chatId))
-    
-    // If the deleted chat was the current one, clear current chat
-    if (currentChat?.id === chatId) {
-      setCurrentChat(null)
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      console.log('🔍 handleDeleteChat - Deleting chat:', chatId)
+      await ChatService.deleteChatHistory(chatId)
+      setChatHistories((prev) => prev.filter(chat => chat.id !== chatId))
+      
+      // If the deleted chat was the current one, clear current chat
+      if (currentChat?.id === chatId) {
+        setCurrentChat(null)
+      }
+      console.log('✅ Chat deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
     }
   }
 
@@ -246,35 +296,47 @@ function BiasDetectionContent() {
     // Ensure a chat exists; if not, create one so the sidebar updates immediately
     let activeChat = currentChat
     if (!activeChat) {
-      const newChat: ChatHistory = {
-        id: `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        title: "New Analysis",
-        messages: [],
-        createdAt: new Date(),
+      try {
+        // Pass Clerk user ID if authenticated
+        const userId = user?.id
+        
+        // Debug logging
+        console.log('🔍 sendMessage - Creating new chat with userId:', userId)
+        
+        activeChat = await ChatService.createChatHistory("New Analysis", userId)
+        setChatHistories((prev) => [activeChat!, ...prev])
+        setCurrentChat(activeChat)
+      } catch (error) {
+        console.error('Failed to create chat:', error)
+        return
       }
-      setChatHistories((prev) => [newChat, ...prev])
-      setCurrentChat(newChat)
-      activeChat = newChat
     }
-
-    const userMessage: ChatMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      content,
-      sender: "user",
-      timestamp: new Date(),
-    }
-
-    const updatedChat = {
-      ...activeChat,
-      messages: [...activeChat.messages, userMessage],
-      title: content.slice(0, 30) + (content.length > 30 ? "..." : ""),
-    }
-
-    setCurrentChat(updatedChat)
-    setChatHistories((prev) => prev.map((chat) => (chat.id === activeChat!.id ? updatedChat : chat)))
-    setIsLoading(true)
 
     try {
+      // Add user message to Supabase
+      const userMessage = await ChatService.addMessage(
+        activeChat.id,
+        content,
+        "user"
+      )
+
+      // Update local state with the new message
+      const updatedChat = {
+        ...activeChat,
+        messages: [...activeChat.messages, userMessage],
+        title: content.slice(0, 30) + (content.length > 30 ? "..." : ""),
+      }
+
+      setCurrentChat(updatedChat)
+      setChatHistories((prev) => prev.map((chat) => (chat.id === activeChat!.id ? updatedChat : chat)))
+      
+      // Update chat title if it's still "New Analysis"
+      if (activeChat.title === "New Analysis") {
+        await ChatService.updateChatTitle(activeChat.id, updatedChat.title)
+      }
+
+      setIsLoading(true)
+
       // Call the Groq API for bias analysis
       const response = await fetch('/api/analyze-bias', {
         method: 'POST',
@@ -307,13 +369,14 @@ function BiasDetectionContent() {
         confidence: dynamicConfidence
       }
       
-      const systemMessage: ChatMessage = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: generateAnalysisSummary(processedAnalysisData, content),
-        sender: "system",
-        timestamp: new Date(),
-        type: "analysis",
-      }
+      // Add system message with analysis data to Supabase
+      const systemMessage = await ChatService.addMessage(
+        activeChat.id,
+        generateAnalysisSummary(processedAnalysisData, content),
+        "system",
+        "analysis",
+        processedAnalysisData
+      )
 
       const finalized = {
         ...updatedChat,
@@ -321,25 +384,28 @@ function BiasDetectionContent() {
       }
       setCurrentChat(finalized)
       setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
-      setIsLoading(false)
 
     } catch (error) {
       console.error('Error analyzing bias:', error)
       
-      // Create error message for user
-      const errorMessage: ChatMessage = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: "Sorry, I couldn't analyze the bias at this time. Please check your connection and try again.",
-        sender: "system",
-        timestamp: new Date(),
-      }
+      try {
+        // Create error message for user
+        const errorMessage = await ChatService.addMessage(
+          activeChat.id,
+          "Sorry, I couldn't analyze the bias at this time. Please check your connection and try again.",
+          "system"
+        )
 
-      const finalized = {
-        ...updatedChat,
-        messages: [...updatedChat.messages, errorMessage],
+        const finalized = {
+          ...activeChat,
+          messages: [...activeChat.messages, errorMessage],
+        }
+        setCurrentChat(finalized)
+        setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
+      } catch (dbError) {
+        console.error('Failed to save error message:', dbError)
       }
-      setCurrentChat(finalized)
-      setChatHistories((prev) => prev.map((chat) => (chat.id === finalized.id ? finalized : chat)))
+    } finally {
       setIsLoading(false)
     }
   }
@@ -363,6 +429,20 @@ function BiasDetectionContent() {
     }
     
     return lines.join("\n")
+  }
+
+  // Show loading while Clerk is initializing
+  if (!isLoaded || isLoadingChats) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">
+            {!isLoaded ? "Loading authentication..." : "Loading chat histories..."}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -556,24 +636,26 @@ function BiasDetectionContent() {
             <div className="border-t border-border bg-background/50 flex-shrink-0">
               <InputBox
                 onSendMessage={sendMessage}
-                onSendFiles={(fileNames) => {
+                onSendFiles={async (fileNames) => {
                   if (!currentChat) {
-                    startNewAnalysis()
+                    await startNewAnalysis()
                   }
                   const targetChat = currentChat || chatHistories[0] || null
                   if (!targetChat) return
-                  const fileMessages: ChatMessage[] = fileNames.map((name, i) => ({
-                    id: `file_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
-                    content: `Uploaded: ${name}`,
-                    sender: "user",
-                    timestamp: new Date(),
-                  }))
-                  const updated = {
-                    ...targetChat,
-                    messages: [...targetChat.messages, ...fileMessages],
+                  
+                  try {
+                    for (const fileName of fileNames) {
+                      await ChatService.addMessage(
+                        targetChat.id,
+                        `Uploaded: ${fileName}`,
+                        "user"
+                      )
+                    }
+                    // Reload chat histories to get updated messages
+                    await loadChatHistories()
+                  } catch (error) {
+                    console.error('Failed to save file messages:', error)
                   }
-                  setCurrentChat(updated)
-                  setChatHistories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
                 }}
               />
             </div>
