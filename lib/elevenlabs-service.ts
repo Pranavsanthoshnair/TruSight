@@ -11,6 +11,12 @@ export interface ElevenLabsResponse {
   format: string
 }
 
+export interface SpeechResponse {
+  success: boolean
+  provider: 'elevenlabs' | 'browser'
+  error?: string
+}
+
 class ElevenLabsService {
   private apiKey: string
   private baseUrl = 'https://api.elevenlabs.io/v1'
@@ -119,7 +125,7 @@ class ElevenLabsService {
   }
 
   /**
-   * Generate and play speech for bias analysis
+   * Generate and play speech for bias analysis with fallback
    */
   async speakBiasAnalysis(analysisData: {
     bias: string
@@ -127,20 +133,87 @@ class ElevenLabsService {
     owner: string
     missingPerspectives: string[]
     reasoning?: string
-  }): Promise<void> {
+  }): Promise<SpeechResponse> {
     try {
       // Create a natural language summary for speech
       const speechText = this.generateSpeechText(analysisData)
       
-      // Convert to speech
-      const response = await this.textToSpeech(speechText)
-      
-      // Play the audio
-      const audio = this.playAudio(response.audio)
-      await audio.play()
+      // Try ElevenLabs first
+      if (this.isAvailable()) {
+        try {
+          const response = await this.textToSpeech(speechText)
+          const audio = this.playAudio(response.audio)
+          await audio.play()
+          return { success: true, provider: 'elevenlabs' }
+        } catch (elevenLabsError) {
+          console.warn('ElevenLabs failed, falling back to browser TTS:', elevenLabsError)
+          // Fall back to browser TTS
+          return this.speakWithBrowserTTS(speechText)
+        }
+      } else {
+        // ElevenLabs not available, use browser TTS
+        return this.speakWithBrowserTTS(speechText)
+      }
     } catch (error) {
       console.error('Error speaking bias analysis:', error)
-      throw error
+      // Final fallback to browser TTS
+      try {
+        const speechText = this.generateSpeechText(analysisData)
+        return this.speakWithBrowserTTS(speechText)
+      } catch (fallbackError) {
+        return { 
+          success: false, 
+          provider: 'browser', 
+          error: 'Both ElevenLabs and browser TTS failed' 
+        }
+      }
+    }
+  }
+
+  /**
+   * Fallback to browser's built-in text-to-speech
+   */
+  private speakWithBrowserTTS(text: string): SpeechResponse {
+    try {
+      // Check if browser supports speech synthesis
+      if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+        const utterance = new SpeechSynthesisUtterance(text)
+        
+        // Configure voice settings
+        utterance.rate = 0.9 // Slightly slower for clarity
+        utterance.pitch = 1.0 // Normal pitch
+        utterance.volume = 1.0 // Full volume
+        
+        // Try to use a good voice if available
+        const voices = speechSynthesis.getVoices()
+        const preferredVoice = voices.find(voice => 
+          voice.lang.startsWith('en') && voice.default
+        ) || voices.find(voice => 
+          voice.lang.startsWith('en')
+        ) || voices[0]
+        
+        if (preferredVoice) {
+          utterance.voice = preferredVoice
+        }
+        
+        // Speak the text
+        speechSynthesis.speak(utterance)
+        
+        return { success: true, provider: 'browser' }
+      } else {
+        return { 
+          success: false, 
+          provider: 'browser', 
+          error: 'Browser does not support speech synthesis' 
+        }
+      }
+    } catch (error) {
+      console.error('Browser TTS failed:', error)
+      return { 
+        success: false, 
+        provider: 'browser', 
+        error: 'Browser TTS error: ' + error.message 
+      }
     }
   }
 
