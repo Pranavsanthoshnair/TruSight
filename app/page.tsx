@@ -12,7 +12,7 @@ import { newsService } from "@/lib/news-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, AlertCircle, RefreshCw, Target, ChevronDown, Globe } from "lucide-react"
+import { Loader2, AlertCircle, RefreshCw, Target, Globe } from "lucide-react"
 import PrismaticBurst from '@/components/PrismaticBurst';
 import Prism from '@/components/Prism';
 
@@ -64,6 +64,12 @@ export default function Home() {
         router.push('/bias')
       }
 
+      // Ctrl/Cmd + E: Go to extension page
+      if ((event.ctrlKey || event.metaKey) && event.key === 'e') {
+        event.preventDefault()
+        router.push('/extension')
+      }
+
       // Ctrl/Cmd + T: Toggle theme
       if ((event.ctrlKey || event.metaKey) && event.key === 't') {
         event.preventDefault()
@@ -76,7 +82,7 @@ export default function Home() {
       // Ctrl/Cmd + R: Refresh news
       if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
         event.preventDefault()
-        fetchNews()
+        handleRefresh()
       }
 
       // Ctrl/Cmd + F: Focus search
@@ -141,8 +147,28 @@ export default function Home() {
     router.push(`/bias?article=${articleData}`)
   }
 
-  const handleRefresh = () => {
-    fetchNews()
+  const handleRefresh = async () => {
+    // Clear any existing error
+    setError(null)
+    
+    // Force refresh by clearing current news first
+    setNews([])
+    setFilteredNews([])
+    
+    // Force fresh news from API (bypass cache)
+    try {
+      setIsLoading(true)
+      const freshNews = await newsService.forceRefreshNews(selectedCategory || "general")
+      setNews(freshNews)
+      setFilteredNews(freshNews)
+    } catch (err) {
+      console.error("Failed to force refresh news:", err)
+      setError("Failed to refresh news. Please try again.")
+      // Fallback to regular fetch
+      await fetchNews()
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const getCategoryStats = () => {
@@ -271,34 +297,30 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="mb-16 md:mb-20"
             >
-              <Button
-                onClick={() => document.getElementById('news-section')?.scrollIntoView({ behavior: 'smooth' })}
-                size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground text-base md:text-lg px-8 md:px-10 py-4 md:py-5 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                Explore News
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <Button
+                  onClick={() => document.getElementById('news-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground text-base md:text-lg px-10 md:px-12 py-5 md:py-6 h-auto font-semibold shadow-xl hover:shadow-xl transition-all duration-300 border-0"
+                >
+                  <Globe className="w-5 h-5 mr-2" />
+                  Explore News
+                </Button>
+                
+                <Button
+                  onClick={() => router.push("/extension")}
+                  variant="outline"
+                  size="lg"
+                  className="bg-white hover:bg-gray-100 text-foreground hover:text-foreground border-2 border-primary/30 hover:border-primary/50 text-base md:text-lg px-10 md:px-12 py-5 md:py-6 h-auto font-semibold transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm"
+                >
+                  <Target className="w-5 h-5 mr-2" />
+                  Get Your Extension
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
 
-          {/* Scroll indicator */}
-          <motion.div
-            className="absolute bottom-8 md:bottom-12 left-1/2 transform -translate-x-1/2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-          >
-            <div className="flex flex-col items-center text-muted-foreground">
-              <span className="text-xs md:text-sm font-medium mb-3 md:mb-4 text-muted-foreground/80">Scroll to explore</span>
-              <motion.div
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="text-muted-foreground/60"
-              >
-                <ChevronDown className="w-5 h-5 md:w-6 md:h-6" />
-              </motion.div>
-            </div>
-          </motion.div>
+
         </section>
 
       {/* News Content Section */}
@@ -343,7 +365,7 @@ export default function Home() {
               onClick={handleRefresh}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 hover:bg-muted/50 transition-colors duration-200"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -351,7 +373,7 @@ export default function Home() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              Refresh
+              {isLoading ? "Refreshing..." : "Refresh"}
             </Button>
           </motion.div>
 

@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { User, Bot, Target, Shield, Eye, Info, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StampEffect } from "./stamp-effect"
+import { VoiceButton } from "./voice-button"
 import type { ChatMessage } from "@/lib/types"
 
 interface ChatWindowProps {
@@ -140,9 +141,12 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
                                     <Target className="w-4 h-4 text-primary flex-shrink-0" />
                                     <span className="text-sm font-semibold">Bias Analysis</span>
                                   </div>
-                                  <Badge className={getBiasColor(analysisData.bias)}>
-                                    {analysisData.bias}
-                                  </Badge>
+                                  <div className="flex items-center gap-2">
+                                    <VoiceButton analysisData={analysisData} />
+                                    <Badge className={getBiasColor(analysisData.bias)}>
+                                      {analysisData.bias}
+                                    </Badge>
+                                  </div>
                                 </div>
 
                                 {/* Confidence Score */}
