@@ -6,6 +6,8 @@ TruSight is a Next.js application that helps users analyze news articles for pot
 
 - 📰 **Real-time News**: Fetch live news from external APIs (GNews, NewsAPI)
 - 🤖 **AI-Powered Bias Detection**: Advanced bias analysis using Groq's Llama 3.1 70B model
+- 🔊 **Voice Responses**: Optional text-to-speech narration of bias analysis results (ElevenLabs)
+- 🔌 **Browser Extension**: Chrome/Firefox extension for real-time bias detection on any website
 - 📊 **News Categories**: Filter news by category (technology, business, sports, etc.)
 - 🎨 **Modern UI**: Beautiful, responsive interface built with Tailwind CSS
 - 🌙 **Dark Mode**: Theme switching with next-themes
@@ -72,6 +74,40 @@ To get real-time news instead of sample data:
 
 3. **Restart your server** after configuration
 
+### ElevenLabs API (Optional - Voice Responses)
+
+To enable voice narration of bias analysis results:
+
+1. **Get an API Key**:
+   - Sign up at [ElevenLabs](https://elevenlabs.io/)
+   - Go to your profile settings to get your API key
+
+2. **Configure the API**:
+   - Add `NEXT_PUBLIC_ELEVENLABS_API_KEY=your_api_key_here` to your `.env.local` file
+   - See [VOICE_SETUP.md](./VOICE_SETUP.md) for detailed setup
+
+3. **Restart your server** after configuration
+
+### Browser Extension
+
+TruSight also offers a powerful browser extension for real-time bias detection:
+
+1. **Get the Extension**:
+   - Visit our [GitHub repository](https://github.com/Pranavsanthoshnair/truext)
+   - Download the latest release
+   - Install in your browser
+
+2. **Features**:
+   - Real-time bias detection on any website
+   - Political bias analysis with confidence metrics
+   - Tone analysis and evidence extraction
+   - Cross-browser compatibility (Chrome, Edge, Brave, Firefox)
+
+3. **Usage**:
+   - Navigate to any website
+   - Click the TruSight extension icon
+   - Get instant bias analysis results
+
 ## Project Structure
 
 ```
@@ -80,24 +116,30 @@ TruSight/
 │   ├── about/             # About page
 │   ├── analyze/           # Analysis page
 │   ├── bias/              # Bias detection page
+│   ├── extension/         # Browser extension page
 │   ├── learn-more/        # Learning resources
 │   └── page.tsx           # Homepage
 ├── components/             # React components
 │   ├── ui/                # UI components (shadcn/ui)
 │   ├── news-card.tsx      # News article display
 │   ├── search-bar.tsx     # Search and filters
+│   ├── voice-button.tsx   # Voice response button
 │   └── ...
 ├── lib/                    # Utility functions
 │   ├── news-service.ts    # News API integration
+│   ├── elevenlabs-service.ts # Voice response service
 │   ├── config.ts          # API configuration
 │   └── ...
-└── public/                 # Static assets
+├── public/                 # Static assets
+├── VOICE_SETUP.md         # Voice functionality setup guide
+└── SUPABASE_SETUP.md      # Database and voice setup
 ```
 
 ## Technologies Used
 
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
+- **Voice**: ElevenLabs Text-to-Speech API
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Animations**: Framer Motion

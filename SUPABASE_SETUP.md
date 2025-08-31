@@ -7,11 +7,18 @@ Add the following environment variables to your `.env.local` file:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_api_key
 ```
 
 You can find these values in your Supabase project dashboard:
 - Go to Settings > API
 - Copy the Project URL and anon/public key
+
+**ElevenLabs API Key:**
+- Sign up at [elevenlabs.io](https://elevenlabs.io)
+- Go to your profile settings
+- Copy your API key
+- This enables optional voice responses for bias analysis results
 
 ## 2. Database Setup
 
@@ -88,12 +95,15 @@ For anonymous users, the system automatically:
 - Chat service (`lib/chat-service.ts`)
 - Database schema with RLS policies
 - Session management for anonymous users
+- Voice response system (`lib/elevenlabs-service.ts`)
 
 **Key Features:**
 - Real-time chat history persistence
 - Analysis data storage and retrieval
 - Automatic error handling and fallbacks
 - Performance optimized with proper indexing
+- Optional voice narration of bias analysis results
+- ElevenLabs integration for high-quality text-to-speech
 
 ## 7. Migration from localStorage
 
@@ -102,13 +112,42 @@ The system automatically handles migration:
 - Old localStorage entries are cleaned up after successful Supabase integration
 - Seamless transition for existing users
 
-## 8. Troubleshooting
+## 8. Voice Response System
+
+The application includes an optional voice response feature powered by ElevenLabs:
+
+**Features:**
+- **Text-to-Speech**: Converts bias analysis results to natural speech
+- **Optional Usage**: Only activates when user clicks the voice button
+- **High Quality**: Uses ElevenLabs' advanced AI voice models
+- **Natural Language**: Automatically generates conversational summaries
+
+**How to Use:**
+1. After receiving a bias analysis, look for the speaker icon (🔊) in the top-right of the analysis card
+2. Click the voice button to hear the analysis narrated
+3. The button shows loading, playing, and error states
+4. Voice automatically stops when narration is complete
+
+**Voice Button States:**
+- 🔊 **Default**: Click to play
+- 🔄 **Loading**: Processing text-to-speech
+- 🔊 **Playing**: Currently narrating (button is highlighted)
+- ❌ **Error**: Failed to play (click to retry)
+
+**Customization:**
+- Voice settings can be adjusted in `lib/elevenlabs-service.ts`
+- Default voice is "Adam" (professional male voice)
+- Other voices available through ElevenLabs API
+
+## 9. Troubleshooting
 
 **Common Issues:**
 
 1. **RLS Policy Errors**: Ensure session context is properly set
 2. **Connection Issues**: Check environment variables and network connectivity
 3. **Permission Denied**: Verify RLS policies are correctly applied
+4. **Voice Not Working**: Check ElevenLabs API key and internet connection
+5. **Audio Playback Issues**: Ensure browser supports audio playback and volume is enabled
 
 **Debug Mode:**
 Enable detailed logging by checking browser console for ChatService operations.
