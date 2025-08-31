@@ -108,6 +108,43 @@ export default function Home() {
       .slice(0, 5)
   }
 
+  // Add structured data for SEO
+  useEffect(() => {
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "TruSight",
+      "description": "AI-Powered News Analysis & Bias Detection Platform",
+      "url": "https://trusight.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://trusight.com/bias?query={search_term_string}",
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "TruSight",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://trusight.com/logo.png"
+        }
+      },
+      "sameAs": [
+        "https://twitter.com/trusight",
+        "https://linkedin.com/company/trusight"
+      ]
+    }
+
+    const script = document.createElement('script')
+    script.type = 'application/ld+json'
+    script.text = JSON.stringify(structuredData)
+    document.head.appendChild(script)
+
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
+
   if (isLoading && news.length === 0) {
     return (
       <div className="min-h-screen bg-background">
