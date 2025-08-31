@@ -4,19 +4,25 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { User, Bot, Target, Shield, Eye, Info, TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { User, Bot, Target, Shield, Eye, Info, TrendingUp, TrendingDown, Minus, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StampEffect } from "./stamp-effect"
 import { VoiceButton } from "./voice-button"
+import { ShareAnalysis } from "./share-analysis"
 import type { ChatMessage } from "@/lib/types"
+import { useState } from "react"
 
 interface ChatWindowProps {
   messages: ChatMessage[]
   isLoading: boolean
+  chatId?: string
 }
 
-export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
+export function ChatWindow({ messages, isLoading, chatId }: ChatWindowProps) {
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [selectedAnalysisMessage, setSelectedAnalysisMessage] = useState<ChatMessage | null>(null)
   // Parse analysis data from message content
   const parseAnalysisData = (content: string) => {
     try {
@@ -143,6 +149,17 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <VoiceButton analysisData={analysisData} />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 hover:bg-primary/10"
+                                      onClick={() => {
+                                        setSelectedAnalysisMessage(message)
+                                        setShareModalOpen(true)
+                                      }}
+                                    >
+                                      <Share2 className="h-3 w-3" />
+                                    </Button>
                                     <Badge className={getBiasColor(analysisData.bias)}>
                                       {analysisData.bias}
                                     </Badge>
@@ -334,6 +351,17 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
           </div>
         </ScrollArea>
       )}
+
+      {/* Share Analysis Modal */}
+      <ShareAnalysis
+        analysisMessage={selectedAnalysisMessage}
+        chatId={chatId}
+        isOpen={shareModalOpen}
+        onClose={() => {
+          setShareModalOpen(false)
+          setSelectedAnalysisMessage(null)
+        }}
+      />
     </div>
   )
 }
