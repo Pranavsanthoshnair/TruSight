@@ -20,6 +20,7 @@ function BiasDetectionContent() {
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
 
   // Check for article data from news page
   const articleParam = searchParams.get('article')
@@ -76,6 +77,87 @@ function BiasDetectionContent() {
       localStorage.setItem("ts_current", currentChat?.id || "")
     } catch {}
   }, [chatHistories, currentChat])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Ctrl/Cmd + K: Focus input box
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault()
+        const inputElement = document.querySelector('textarea[placeholder*="Enter"]') as HTMLTextAreaElement
+        if (inputElement) {
+          inputElement.focus()
+        }
+      }
+
+      // Ctrl/Cmd + N: New analysis
+      if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+        event.preventDefault()
+        startNewAnalysis()
+      }
+
+      // Ctrl/Cmd + /: Toggle sidebar (mobile)
+      if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+        event.preventDefault()
+        setSidebarOpen(!sidebarOpen)
+      }
+
+      // Escape: Close sidebar or clear current chat
+      if (event.key === 'Escape') {
+        if (sidebarOpen) {
+          setSidebarOpen(false)
+        } else if (currentChat) {
+          setCurrentChat(null)
+        }
+      }
+
+      // Ctrl/Cmd + Delete: Delete current chat
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Delete') {
+        event.preventDefault()
+        if (currentChat) {
+          handleDeleteChat(currentChat.id)
+        }
+      }
+
+      // Ctrl/Cmd + 1-9: Switch to chat by number
+      if ((event.ctrlKey || event.metaKey) && /^[1-9]$/.test(event.key)) {
+        event.preventDefault()
+        const chatIndex = parseInt(event.key) - 1
+        if (chatHistories[chatIndex]) {
+          setCurrentChat(chatHistories[chatIndex])
+        }
+      }
+
+      // Ctrl/Cmd + ?: Show keyboard shortcuts
+      if ((event.ctrlKey || event.metaKey) && event.key === '?') {
+        event.preventDefault()
+        setShowKeyboardShortcuts(!showKeyboardShortcuts)
+      }
+
+      // Ctrl/Cmd + T: Toggle theme
+      if ((event.ctrlKey || event.metaKey) && event.key === 't') {
+        event.preventDefault()
+        const themeToggle = document.querySelector('[aria-pressed]') as HTMLButtonElement
+        if (themeToggle) {
+          themeToggle.click()
+        }
+      }
+
+      // Ctrl/Cmd + B: Go back to home
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+        event.preventDefault()
+        router.push('/')
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [chatHistories, currentChat, sidebarOpen, router])
 
   // Calculate dynamic confidence based on bias type and missing perspectives (shared with AnalysisCard)
   const getDynamicConfidence = (bias: string, confidence: number, missingPerspectives: string[]): number => {
@@ -390,10 +472,76 @@ function BiasDetectionContent() {
             </div>
 
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowKeyboardShortcuts(!showKeyboardShortcuts)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ⌘?
+              </Button>
               <ThemeToggle />
             </div>
           </div>
         </header>
+
+        {/* Keyboard Shortcuts Modal */}
+        {showKeyboardShortcuts && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowKeyboardShortcuts(false)}
+          >
+            <motion.div
+              className="bg-background border border-border rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold mb-4">Keyboard Shortcuts</h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Focus Input</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘K</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>New Analysis</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘N</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>Toggle Sidebar</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘/</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>Delete Current Chat</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘Delete</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>Switch to Chat 1-9</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘1-9</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>Toggle Theme</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘T</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>Go Back</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">⌘B</kbd>
+                </div>
+                <div className="flex justify-between">
+                  <span>Close/Clear</span>
+                  <kbd className="px-2 py-1 bg-muted rounded text-xs">Esc</kbd>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Use Ctrl instead of ⌘ on Windows/Linux
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Main Content Area */}
         <div className="flex-1 flex min-h-0">
